@@ -7,7 +7,8 @@ import cn.sinjinsong.server.exception.base.ServletException;
  * Created by SinjinSong on 2017/7/21.
  */
 public class ServerErrorException extends ServletException{
-    public ServerErrorException(HTTPStatus status) {
+    private static final HTTPStatus status = HTTPStatus.INTERNAL_SERVER_ERROR;
+    public ServerErrorException() {
         super(status);
     }
 }

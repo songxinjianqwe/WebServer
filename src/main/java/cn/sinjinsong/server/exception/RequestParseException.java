@@ -7,8 +7,8 @@ import cn.sinjinsong.server.exception.base.ServletException;
  * Created by SinjinSong on 2017/7/20.
  */
 public class RequestParseException extends ServletException {
-
-    public RequestParseException(HTTPStatus status) {
+    private static final HTTPStatus status = HTTPStatus.BAD_REQUEST;
+    public RequestParseException() {
         super(status);
     }
 }

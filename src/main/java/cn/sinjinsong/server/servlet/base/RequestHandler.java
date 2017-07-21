@@ -32,7 +32,7 @@ public class RequestHandler implements Runnable {
     public void run() {
         try {
             if (servlet == null) {
-                throw new ServletNotFoundException(HTTPStatus.NOT_FOUND);
+                throw new ServletNotFoundException();
             }
             //为了让request能找得到response，以设置cookie
             request.setRequestHandler(this);
@@ -42,7 +42,7 @@ public class RequestHandler implements Runnable {
             exceptionHandler.handle(e, response, client);
         } catch (Exception e) {
            //其他未知异常
-            exceptionHandler.handle(new ServerErrorException(HTTPStatus.INTERNAL_SERVER_ERROR), response, client);
+            exceptionHandler.handle(new ServerErrorException(), response, client);
         } finally {
             try {
                 client.close();

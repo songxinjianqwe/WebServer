@@ -2,7 +2,6 @@ package cn.sinjinsong.server.request;
 
 import cn.sinjinsong.server.constant.CharConstant;
 import cn.sinjinsong.server.constant.CharsetProperties;
-import cn.sinjinsong.server.enumeration.HTTPStatus;
 import cn.sinjinsong.server.enumeration.RequestMethod;
 import cn.sinjinsong.server.exception.RequestInvalidException;
 import cn.sinjinsong.server.exception.RequestParseException;
@@ -40,9 +39,7 @@ import java.util.Map;
  * Cookie: PREF=ID=80a06da87be9ae3c:U=f7167333e2c3b714:NW=1:TM=1261551909:LM=1261551917:S=ybYcq2wpfefs4V9g;
  * NID=31=ojj8d-IygaEtSxLgaJmqSjVhCspkviJrB6omjamNrSm8lZhKy_yMfO2M4QMRKcH1g0iQv9u-2hfBW7bUFwVh7pGaRUb0RnHcJU37y-
  * FxlRugatx63JLv7CWMD6UB_O_r
- * <p>
- * <p>
- * <p>
+ * 
  * POST /search HTTP/1.1
  * Accept: image/gif, image/x-xbitmap, image/jpeg, image/pjpeg, application/vnd.ms-excel, application/vnd.ms-powerpoint,
  * application/msword, application/x-silverlight
@@ -87,7 +84,7 @@ public class Request {
             buf = new byte[bin.available()];
             int len = bin.read(buf);
             if (len <= 0) {
-                throw new RequestInvalidException(HTTPStatus.BAD_REQUEST);
+                throw new RequestInvalidException();
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -109,7 +106,7 @@ public class Request {
             }
         } catch (Throwable e) {
             e.printStackTrace();
-            throw new RequestParseException(HTTPStatus.BAD_REQUEST);
+            throw new RequestParseException();
         }
     }
 
@@ -206,7 +203,7 @@ public class Request {
         } else {
             this.cookies = new Cookie[0];
         }
-        log.info("Cookies:{}", cookies);
+        log.info("Cookies:{}", Arrays.toString(cookies));
     }
 
     private void parseBody(String body) {

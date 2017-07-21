@@ -7,7 +7,8 @@ import cn.sinjinsong.server.exception.base.ServletException;
  * Created by SinjinSong on 2017/7/21.
  */
 public class ServletNotFoundException extends ServletException {
-    public ServletNotFoundException(HTTPStatus status) {
+    private static final HTTPStatus status = HTTPStatus.NOT_FOUND;
+    public ServletNotFoundException() {
         super(status);
     }
 }

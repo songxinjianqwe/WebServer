@@ -29,7 +29,7 @@ public class ApplicationRequestDispatcher implements RequestDispatcher {
     @Override
     public void forward(Request request, Response response) throws ServletException, IOException {
         if (ResourceHandler.class.getResource(url) == null) {
-            throw new ResourceNotFoundException(HTTPStatus.NOT_FOUND);
+            throw new ResourceNotFoundException();
         }
         String body = TemplateResolver.resolve(new String(IOUtil.getBytesFromFile(url), CharsetProperties.UTF_8_CHARSET),request);
         response.header(HTTPStatus.OK, MimeTypeUtil.getTypes(url)).body(body.getBytes(CharsetProperties.UTF_8_CHARSET));

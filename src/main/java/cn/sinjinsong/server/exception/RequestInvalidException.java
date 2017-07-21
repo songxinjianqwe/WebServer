@@ -7,7 +7,8 @@ import cn.sinjinsong.server.exception.base.ServletException;
  * Created by SinjinSong on 2017/7/21.
  */
 public class RequestInvalidException extends ServletException {
-    public RequestInvalidException(HTTPStatus status) {
+    private static final HTTPStatus status = HTTPStatus.BAD_REQUEST;
+    public RequestInvalidException() {
         super(status);
     }
 }

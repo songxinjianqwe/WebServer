@@ -16,7 +16,7 @@ import static cn.sinjinsong.server.constant.Context.ERROR_PAGE;
  */
 @Slf4j
 public class ExceptionHandler {
-
+    
     public void handle(ServletException e, Response response, Socket client) {
         try {
             if (e instanceof RequestInvalidException) {
