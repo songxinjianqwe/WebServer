@@ -193,7 +193,7 @@ public class Request {
             headers.put(key, Arrays.asList(values));
         }
         log.debug("headers:{}", this.headers);
-
+        
         //解析Cookie
         if (headers.containsKey("Cookie")) {
             String[] rawCookies = headers.get("Cookie").get(0).split(";");
@@ -216,7 +216,7 @@ public class Request {
             this.params = new HashMap<>();
         }
     }
-
+    
     private void parseParams(String params) {
         String[] urlParams = params.split("&");
         if (this.params == null) {

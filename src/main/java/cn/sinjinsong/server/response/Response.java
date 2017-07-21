@@ -35,6 +35,7 @@ public class Response {
     private StringBuilder headerAppender;
     private StringBuilder bodyAppender;
     private List<Cookie> cookies;
+    private List<Header> headers;
     private byte[] body;
     private OutputStream os;
     
@@ -43,25 +44,23 @@ public class Response {
         this.headerAppender = new StringBuilder();
         this.bodyAppender = new StringBuilder();
         this.cookies = new ArrayList<>();
+        this.headers = new ArrayList<>();
     }
     
     public void addCookie(Cookie cookie){
         cookies.add(cookie);
     }
     
+    public void addHeader(Header header){
+        headers.add(header);
+    }
+    
     public Response header(HTTPStatus status) {
-        return header(status, DEFAULT_CONTENT_TYPE,null);
+        return header(status, DEFAULT_CONTENT_TYPE);
     }
     
+ 
     public Response header(HTTPStatus status, String contentType) {
-        return header(status, contentType,null);
-    }
-    
-    public Response header(HTTPStatus status, Map<String,String> headers) {
-        return header(status, DEFAULT_CONTENT_TYPE,headers);
-    }
-    
-    public Response header(HTTPStatus status, String contentType, Map<String,String> headers) {
         if (contentType == null) {
             contentType = DEFAULT_CONTENT_TYPE;
         }
@@ -70,8 +69,8 @@ public class Response {
         //Date: Sat, 31 Dec 2005 23:59:59 GMT
         headerAppender.append("Date:").append(BLANK).append(new Date()).append(CRLF);
         headerAppender.append("Content-Type:").append(BLANK).append(contentType).append(CRLF);
-        if(headers != null){
-            for(Map.Entry<String,String> header : headers.entrySet()){
+        if(headers != null) {
+            for (Header header : headers) {
                 headerAppender.append(header.getKey()).append(":").append(BLANK).append(header.getValue()).append(CRLF);
             }
         }
@@ -92,7 +91,7 @@ public class Response {
         this.body = body;
         return this;
     }
-
+    
     public Response print(String content) {
         bodyAppender.append(content);
         return this;
@@ -139,9 +138,8 @@ public class Response {
     
     public void sendRedirect(String url){
         log.info("重定向至{}",url);
-        Map<String,String> headers = new HashMap<>();
-        headers.put("Location",url);
-        header(HTTPStatus.MOVED_TEMPORARILY,headers);
+        addHeader(new Header("Location",url));
+        header(HTTPStatus.MOVED_TEMPORARILY);
         body(bodyAppender.toString().getBytes(CharsetProperties.UTF_8_CHARSET));
     }
 }
