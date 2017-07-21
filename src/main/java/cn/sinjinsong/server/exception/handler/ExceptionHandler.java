@@ -1,12 +1,13 @@
 package cn.sinjinsong.server.exception.handler;
 
-import cn.sinjinsong.server.exception.base.BaseWebException;
+import cn.sinjinsong.server.exception.RequestInvalidException;
+import cn.sinjinsong.server.exception.base.ServletException;
 import cn.sinjinsong.server.response.Response;
 import cn.sinjinsong.server.util.IOUtil;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
-import java.io.OutputStream;
+import java.net.Socket;
 
 import static cn.sinjinsong.server.constant.Context.ERROR_PAGE;
 
@@ -16,21 +17,27 @@ import static cn.sinjinsong.server.constant.Context.ERROR_PAGE;
 @Slf4j
 public class ExceptionHandler {
 
-    public void handle(BaseWebException e, OutputStream os) {
+    public void handle(ServletException e, Response response, Socket client) {
         try {
-            os.write(new Response.ResponseBuilder()
-                    .header(e.getStatus())
-                    .body(IOUtil.getBytesFromFile(String.format(ERROR_PAGE, String.valueOf(e.getStatus().getCode()))))
-                    .build()
-                    .getBytes()
-            );
-            os.flush();
-            log.info("错误消息已写入输出流");
+            if (e instanceof RequestInvalidException) {
+                log.info("请求无法读取，丢弃");
+            } else {
+                log.info("抛出异常:{}", e.getClass().getName());
+                e.printStackTrace();
+                response
+                        .header(e.getStatus())
+                        .body(
+                                IOUtil.getBytesFromFile(
+                                        String.format(ERROR_PAGE, String.valueOf(e.getStatus().getCode())))
+                        )
+                        .write();
+                log.info("错误消息已写入输出流");
+            }
         } catch (IOException e1) {
             e1.printStackTrace();
         } finally {
             try {
-                os.close();
+                client.close();
             } catch (IOException e1) {
                 e1.printStackTrace();
             }

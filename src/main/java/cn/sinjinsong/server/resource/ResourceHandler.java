@@ -1,15 +1,17 @@
 package cn.sinjinsong.server.resource;
 
-import cn.sinjinsong.server.enumeration.ResponseStatus;
+import cn.sinjinsong.server.enumeration.HTTPStatus;
 import cn.sinjinsong.server.exception.RequestParseException;
+import cn.sinjinsong.server.exception.ResourceNotFoundException;
+import cn.sinjinsong.server.exception.base.ServletException;
 import cn.sinjinsong.server.exception.handler.ExceptionHandler;
 import cn.sinjinsong.server.response.Response;
-import cn.sinjinsong.server.util.MimeTypeUtil;
 import cn.sinjinsong.server.util.IOUtil;
+import cn.sinjinsong.server.util.MimeTypeUtil;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
-import java.io.OutputStream;
+import java.net.Socket;
 
 /**
  * Created by SinjinSong on 2017/7/20.
@@ -17,24 +19,27 @@ import java.io.OutputStream;
 @Slf4j
 public class ResourceHandler {
     private ExceptionHandler exceptionHandler;
-    public ResourceHandler(ExceptionHandler exceptionHandler){
+
+    public ResourceHandler(ExceptionHandler exceptionHandler) {
         this.exceptionHandler = exceptionHandler;
     }
     
-    public void handle(String url, OutputStream os) {
+    public void handle(String url, Response response, Socket client) {
         try {
-            os.write(new Response.ResponseBuilder()
-                    .header(ResponseStatus.OK, MimeTypeUtil.getTypes(url))
-                    .body(IOUtil.getBytesFromFile(url))
-                    .build().getBytes());
-            os.flush();
-            log.info("{}已写入输出流",url);
-        } catch (IOException e1) {
-            e1.printStackTrace();
-            exceptionHandler.handle(new RequestParseException(ResponseStatus.BAD_REQUEST),os);
+            if (ResourceHandler.class.getResource(url) == null) {
+                log.info("找不到该资源:{}",url);
+                throw new ResourceNotFoundException(HTTPStatus.NOT_FOUND);
+            }
+            response.header(HTTPStatus.OK, MimeTypeUtil.getTypes(url)).body(IOUtil.getBytesFromFile(url)).write();
+            log.info("{}已写入输出流", url);
+        } catch (IOException e) {
+            e.printStackTrace();
+            exceptionHandler.handle(new RequestParseException(HTTPStatus.BAD_REQUEST), response, client);
+        } catch (ServletException e) {
+            exceptionHandler.handle(e, response, client);
         } finally {
             try {
-                os.close();
+                client.close();
             } catch (IOException e) {
                 e.printStackTrace();
             }

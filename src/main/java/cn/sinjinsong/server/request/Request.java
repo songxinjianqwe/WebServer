@@ -2,15 +2,24 @@ package cn.sinjinsong.server.request;
 
 import cn.sinjinsong.server.constant.CharConstant;
 import cn.sinjinsong.server.constant.CharsetProperties;
+import cn.sinjinsong.server.enumeration.HTTPStatus;
 import cn.sinjinsong.server.enumeration.RequestMethod;
-import cn.sinjinsong.server.enumeration.ResponseStatus;
+import cn.sinjinsong.server.exception.RequestInvalidException;
 import cn.sinjinsong.server.exception.RequestParseException;
+import cn.sinjinsong.server.model.Cookie;
+import cn.sinjinsong.server.model.HTTPSession;
+import cn.sinjinsong.server.request.dispatcher.RequestDispatcher;
+import cn.sinjinsong.server.request.dispatcher.impl.ApplicationRequestDispatcher;
+import cn.sinjinsong.server.servlet.base.RequestHandler;
+import cn.sinjinsong.server.servlet.context.ServletContext;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -53,10 +62,15 @@ import java.util.Map;
 @Data
 @Slf4j
 public class Request {
+    private RequestHandler requestHandler;
     private RequestMethod method;
     private String url;
     private Map<String, List<String>> params;
     private Map<String, List<String>> headers;
+    private Map<String, Object> attributes;
+    private ServletContext servletContext;
+    private Cookie[] cookies;
+    private HTTPSession session;
 
     /**
      * 读取请求体只能使用字节流，使用字符流读不到
@@ -64,7 +78,8 @@ public class Request {
      * @param in
      * @throws RequestParseException
      */
-    public void build(InputStream in) throws RequestParseException {
+    public Request(InputStream in) throws RequestParseException, RequestInvalidException {
+        this.attributes = new HashMap<>();
         log.info("开始读取Request");
         BufferedInputStream bin = new BufferedInputStream(in);
         byte[] buf = null;
@@ -72,13 +87,19 @@ public class Request {
             buf = new byte[bin.available()];
             int len = bin.read(buf);
             if (len <= 0) {
-                return;
+                throw new RequestInvalidException(HTTPStatus.BAD_REQUEST);
             }
         } catch (IOException e) {
             e.printStackTrace();
         }
 
-        String[] lines = new String(buf, CharsetProperties.UTF_8_CHARSET).split(CharConstant.CRLF);
+        String[] lines = null;
+        try {
+            //支持中文，对中文进行URL解码
+            lines = URLDecoder.decode(new String(buf, CharsetProperties.UTF_8_CHARSET), CharsetProperties.UTF_8).split(CharConstant.CRLF);
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        }
         log.info("Request读取完毕");
         log.info("{}", Arrays.toString(lines));
         try {
@@ -88,8 +109,54 @@ public class Request {
             }
         } catch (Throwable e) {
             e.printStackTrace();
-            throw new RequestParseException(ResponseStatus.BAD_REQUEST);
+            throw new RequestParseException(HTTPStatus.BAD_REQUEST);
         }
+    }
+
+    public void setAttribute(String key, Object value) {
+        attributes.put(key, value);
+    }
+
+    public Object getAttribute(String key) {
+        return attributes.get(key);
+    }
+
+    public RequestDispatcher getRequestDispatcher(String url) {
+        return new ApplicationRequestDispatcher(url);
+    }
+
+    /**
+     * 如果请求报文中携带JSESSIONID这个Cookie，那么取出对应的session
+     * 否则创建一个Session，并在响应报文中添加一个响应头Set-Cookie: JSESSIONID=D5A5C79F3C8E8653BC8B4F0860BFDBCD
+     * <p>
+     * 所有从请求报文中得到的Cookie，都会在响应报文中返回
+     * <p>
+     * 服务器只会在客户端第一次请求响应的时候，在响应头上添加Set-Cookie：“JSESSIONID=XXXXXXX”信息，
+     * 接下来在同一个会话的第二第三次响应头里，是不会添加Set-Cookie：“JSESSIONID=XXXXXXX”信息的；
+     * <p>
+     * <p>
+     * 即，如果在Cookie中读到的JSESSIONID，那么不会创建新的Session，也不会在响应头中加入Set-Cookie：“JSESSIONID=XXXXXXX”
+     * 如果没有读到，那么会创建新的Session，并在响应头中加入Set-Cookie：“JSESSIONID=XXXXXXX”
+     * 如果没有调用getSession，那么不会创建新的Session
+     *
+     * @return HTTPSession
+     */
+    public HTTPSession getSession() {
+        if (session != null) {
+            return session;
+        }
+        for (Cookie cookie : cookies) {
+            if (cookie.getKey().equals("JSESSIONID")) {
+                log.info("servletContext:{}",servletContext);
+                HTTPSession currentSession = servletContext.getSession(cookie.getValue());
+                if (currentSession != null) {
+                    this.session = currentSession;
+                    return session;
+                }
+            }
+        }
+        session = servletContext.createSession(requestHandler.getResponse());
+        return session;
     }
 
     private void parseHeaders(String[] lines) {
@@ -126,6 +193,20 @@ public class Request {
             headers.put(key, Arrays.asList(values));
         }
         log.debug("headers:{}", this.headers);
+
+        //解析Cookie
+        if (headers.containsKey("Cookie")) {
+            String[] rawCookies = headers.get("Cookie").get(0).split(";");
+            this.cookies = new Cookie[rawCookies.length];
+            for (int i = 0; i < rawCookies.length; i++) {
+                String[] kv = rawCookies[i].split("=");
+                this.cookies[i] = new Cookie(kv[0], kv[1]);
+            }
+            headers.remove("Cookie");
+        } else {
+            this.cookies = new Cookie[0];
+        }
+        log.info("Cookies:{}", cookies);
     }
 
     private void parseBody(String body) {
