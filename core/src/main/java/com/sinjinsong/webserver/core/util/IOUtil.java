@@ -29,6 +29,7 @@ public class IOUtil {
         FileChannel channel = in.getChannel();
         ByteBuffer buf = ByteBuffer.allocate((int) channel.size());
         channel.read(buf);
+        log.info("读取文件完毕");
         channel.close();
         in.close();
         return buf.array();

@@ -1,7 +1,6 @@
 package com.sinjinsong.webserver.core.servlet.base;
 
 import com.sinjinsong.webserver.core.WebApplication;
-import com.sinjinsong.webserver.core.enumeration.RequestMethod;
 import com.sinjinsong.webserver.core.exception.base.ServletException;
 import com.sinjinsong.webserver.core.exception.handler.ExceptionHandler;
 import com.sinjinsong.webserver.core.request.Request;
@@ -54,21 +53,7 @@ public class DispatcherServlet {
             request = new Request(client.getInputStream());
             response = new Response(client.getOutputStream());
             request.setServletContext(servletContext);
-            //如果是静态资源，那么直接返回
-            if (request.getMethod() == RequestMethod.GET && (request.getUrl().contains(".") || request.getUrl().equals("/"))) {
-                log.info("静态资源:{}", request);
-                //首页
-                if (request.getUrl().equals("/")) {
-                    request.setUrl("/index.html");
-                    resourceHandler.handle(request, response, client);
-                }
-                resourceHandler.handle(request, response, client);
-            } else {
-                //处理动态资源，交由某个Servlet执行
-                //Servlet是单例多线程
-                //Servlet在RequestHandler中执行
-                pool.execute(new RequestHandler(client, request, response, servletContext.dispatch(request.getUrl()), exceptionHandler));
-            }
+            pool.execute(new RequestHandler(client, request, response, servletContext.dispatch(request.getUrl()), exceptionHandler, resourceHandler));
         } catch (ServletException e) {
             exceptionHandler.handle(e, response, client);
         }

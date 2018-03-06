@@ -1,11 +1,17 @@
 package com.sinjinsong.webserver.core;
 
 import com.sinjinsong.webserver.core.servlet.base.DispatcherServlet;
+import com.sinjinsong.webserver.core.thread.Acceptor;
+import com.sinjinsong.webserver.core.thread.Poller;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
-import java.net.ServerSocket;
+import java.net.InetSocketAddress;
 import java.net.Socket;
+import java.nio.channels.ServerSocketChannel;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Created by SinjinSong on 2017/7/20.
@@ -13,10 +19,14 @@ import java.net.Socket;
 @Slf4j
 public class Server {
     private static final int DEFAULT_PORT = 8080;
-    private ServerSocket server;
-
-    private Acceptor acceptor;
+    private int acceptorCount = 2;
+    private int pollerCount = Math.min(2, Runtime.getRuntime().availableProcessors());
+    private ServerSocketChannel server;
     private DispatcherServlet dispatcherServlet;
+    private volatile boolean isRunning = true;
+    protected List<Acceptor> acceptors;
+    private List<Poller> pollers;
+    private AtomicInteger pollerRotater = new AtomicInteger(0);
 
     public Server() {
         this(DEFAULT_PORT);
@@ -24,9 +34,9 @@ public class Server {
 
     public Server(int port) {
         try {
-            server = new ServerSocket(port);
-            acceptor = new Acceptor();
-            acceptor.start();
+            initServerSocket(port);
+            initAcceptor();
+            initPoller();
             dispatcherServlet = new DispatcherServlet();
             log.info("服务器启动");
         } catch (IOException e) {
@@ -34,43 +44,54 @@ public class Server {
         }
     }
 
+    private void initServerSocket(int port) throws IOException {
+        server = ServerSocketChannel.open();
+        server.bind(new InetSocketAddress(port));
+        server.configureBlocking(true);
+    }
+
+    private void initPoller() {
+        pollers = new ArrayList<>(pollerCount);
+        for (int i = 0; i < pollerCount; i++) {
+            Poller poller = new Poller(this);
+            String pollName = "-ClientPoller-" + i;
+            Thread pollerThread = new Thread(poller, pollName);
+            pollerThread.setDaemon(true);
+            pollerThread.start();
+            pollers.add(poller);
+        }
+    }
+
+    public Poller getPoller() {
+        int idx = Math.abs(pollerRotater.incrementAndGet()) % pollers.size();
+        return pollers.get(idx);
+    }
+    
+    private void initAcceptor() {
+        acceptors = new ArrayList<>(acceptorCount);
+        for (int i = 0; i < acceptorCount; i++) {
+            Acceptor acceptor = new Acceptor(this);
+            String threadName = "Acceptor-" + i;
+            Thread t = new Thread(acceptor, threadName);
+            t.setDaemon(true);
+            t.start();
+            acceptors.add(acceptor);
+        }
+    }
+
     public void close() {
-        acceptor.shutdown();
+//        acceptor.shutdown();
+        // poolers.shutdown();
+        isRunning = false;
         dispatcherServlet.shutdown();
     }
-
-    private class Acceptor extends Thread {
-        @Override
-        public void interrupt() {
-            try {
-                try {
-                    server.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            } finally {
-                super.interrupt();
-            }
-        }
-
-        public void shutdown() {
-            Thread.currentThread().interrupt();
-        }
-
-        @Override
-        public void run() {
-            log.info("开始监听");
-            while (!Thread.currentThread().isInterrupted()) {
-                Socket client;
-                try {
-                    //TCP的短连接，请求处理完即关闭
-                    client = server.accept();
-                    log.info("client:{}", client);
-                    dispatcherServlet.doDispatch(client);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-        }
+    
+    public boolean isRunning() {
+        return isRunning;
     }
+    
+    public Socket serverSocketAccept() throws IOException {
+        return server.accept();
+    }
+    
 }

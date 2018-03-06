@@ -26,19 +26,24 @@ public class ResourceHandler {
     public ResourceHandler(ExceptionHandler exceptionHandler) {
         this.exceptionHandler = exceptionHandler;
     }
-    
+
     public void handle(Request request, Response response, Socket client) {
         String url = request.getUrl();
         try {
             if (ResourceHandler.class.getResource(url) == null) {
-                log.info("找不到该资源:{}",url);
+                log.info("找不到该资源:{}", url);
                 throw new ResourceNotFoundException();
             }
-            String body = TemplateResolver.resolve(new String(IOUtil.getBytesFromFile(url), CharsetProperties.UTF_8_CHARSET),request);
-            response.header(HTTPStatus.OK, MimeTypeUtil.getTypes(url)).body(body.getBytes(CharsetProperties.UTF_8_CHARSET)).write();
-            log.info("{}已写入输出流", url);
+            byte[] body = IOUtil.getBytesFromFile(url);
+            if (url.endsWith(".html")) {
+                body = TemplateResolver
+                        .resolve(new String(body, CharsetProperties.UTF_8_CHARSET), request)
+                        .getBytes(CharsetProperties.UTF_8_CHARSET);
+            }
+            response.header(HTTPStatus.OK, MimeTypeUtil.getTypes(url))
+                    .body(body)
+                    .write();
         } catch (IOException e) {
-            e.printStackTrace();
             exceptionHandler.handle(new RequestParseException(), response, client);
         } catch (ServletException e) {
             exceptionHandler.handle(e, response, client);
