@@ -26,7 +26,7 @@ public class ResourceHandler {
     public ResourceHandler(ExceptionHandler exceptionHandler) {
         this.exceptionHandler = exceptionHandler;
     }
-
+    
     public void handle(Request request, Response response, Socket client) {
         String url = request.getUrl();
         try {

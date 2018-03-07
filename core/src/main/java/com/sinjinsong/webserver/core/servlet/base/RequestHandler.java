@@ -31,7 +31,7 @@ public class RequestHandler implements Runnable {
     private HTTPServlet servlet;
     private ExceptionHandler exceptionHandler;
     private ResourceHandler resourceHandler;
-
+    
     @Override
     public void run() {
         try {

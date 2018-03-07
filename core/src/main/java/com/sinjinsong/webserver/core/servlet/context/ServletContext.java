@@ -46,7 +46,7 @@ public class ServletContext {
         this.mapping = new HashMap<>();
         this.attributes = new ConcurrentHashMap<>();
         this.sessions = new ConcurrentHashMap<>();
-        Document doc = XMLUtil.getDocument(ServletContext.class.getResource("/WEB-INF/web.xml").getFile());
+        Document doc = XMLUtil.getDocument(ServletContext.class.getResourceAsStream("/web.xml"));
         Element root = doc.getRootElement();
         List<Element> servlets = root.elements("servlet");
         for (Element servlet : servlets) {
