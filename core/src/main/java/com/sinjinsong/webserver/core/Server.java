@@ -25,11 +25,12 @@ public class Server {
     public Server(int port) {
         try {
             server = new ServerSocket(port);
+            WebApplication.init();
             acceptor = new Acceptor();
             acceptor.start();
             dispatcherServlet = new DispatcherServlet();
             log.info("服务器启动");
-        } catch (IOException e) {
+        } catch (Exception e) {
             e.printStackTrace();
             log.info("初始化服务器失败");
             close();

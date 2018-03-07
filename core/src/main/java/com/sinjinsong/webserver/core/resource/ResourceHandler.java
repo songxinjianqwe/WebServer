@@ -47,12 +47,6 @@ public class ResourceHandler {
             exceptionHandler.handle(new RequestParseException(), response, client);
         } catch (ServletException e) {
             exceptionHandler.handle(e, response, client);
-        } finally {
-            try {
-                client.close();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
+        } 
     }
 }

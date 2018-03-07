@@ -30,8 +30,8 @@ public class ServletContext {
     private Map<String, String> mapping;
     private Map<String, Object> attributes;
     private Map<String, HTTPSession> sessions;
-    
-    public ServletContext() {
+
+    public ServletContext() throws ClassNotFoundException, InstantiationException, IllegalAccessException {
         init();
     }
 
@@ -41,7 +41,7 @@ public class ServletContext {
     }
 
     //从web.xml读到servlet映射
-    public void init() {
+    public void init() throws ClassNotFoundException, IllegalAccessException, InstantiationException {
         this.servlet = new HashMap<>();
         this.mapping = new HashMap<>();
         this.attributes = new ConcurrentHashMap<>();
@@ -53,15 +53,7 @@ public class ServletContext {
             String key = servlet.element("servlet-name").getText();
             String value = servlet.element("servlet-class").getText();
             HTTPServlet httpServlet = null;
-            try {
-                httpServlet = (HTTPServlet) Class.forName(value).newInstance();
-            } catch (InstantiationException e) {
-                e.printStackTrace();
-            } catch (IllegalAccessException e) {
-                e.printStackTrace();
-            } catch (ClassNotFoundException e) {
-                e.printStackTrace();
-            }
+            httpServlet = (HTTPServlet) Class.forName(value).newInstance();
             this.servlet.put(key, httpServlet);
         }
 
@@ -76,11 +68,11 @@ public class ServletContext {
     public HTTPSession getSession(String JSESSIONID) {
         return sessions.get(JSESSIONID);
     }
-    
-    public HTTPSession createSession(Response response){
+
+    public HTTPSession createSession(Response response) {
         HTTPSession session = new HTTPSession(UUIDUtil.uuid());
-        sessions.put(session.getId(),session);
-        response.addCookie(new Cookie("JSESSIONID",session.getId()));
+        sessions.put(session.getId(), session);
+        response.addCookie(new Cookie("JSESSIONID", session.getId()));
         return session;
     }
 

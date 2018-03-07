@@ -13,7 +13,6 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 
-import java.io.IOException;
 import java.net.Socket;
 
 /**
@@ -31,7 +30,7 @@ public class RequestHandler implements Runnable {
     private HTTPServlet servlet;
     private ExceptionHandler exceptionHandler;
     private ResourceHandler resourceHandler;
-    
+
     @Override
     public void run() {
         try {
@@ -62,12 +61,6 @@ public class RequestHandler implements Runnable {
         } catch (Exception e) {
             //其他未知异常
             exceptionHandler.handle(new ServerErrorException(), response, client);
-        } finally {
-            try {
-                client.close();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
         }
     }
 }
