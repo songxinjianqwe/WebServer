@@ -1,7 +1,6 @@
 package com.sinjinsong.webserver.core.servlet.base;
 
 import com.sinjinsong.webserver.core.WebApplication;
-import com.sinjinsong.webserver.core.enumeration.RequestMethod;
 import com.sinjinsong.webserver.core.exception.base.ServletException;
 import com.sinjinsong.webserver.core.exception.handler.ExceptionHandler;
 import com.sinjinsong.webserver.core.request.Request;
@@ -22,17 +21,17 @@ import java.util.concurrent.TimeUnit;
  */
 @Data
 @Slf4j
-public class RequestDispatcher {
+public class DispatcherServlet {
     private ResourceHandler resourceHandler;
     private ExceptionHandler exceptionHandler;
     private ThreadPoolExecutor pool;
     private ServletContext servletContext;
 
-    public RequestDispatcher() throws IOException {
+    public DispatcherServlet() throws IOException {
         this.servletContext = WebApplication.getServletContext();
         this.exceptionHandler = new ExceptionHandler();
         this.resourceHandler = new ResourceHandler(exceptionHandler);
-        this.pool = new ThreadPoolExecutor(5, 8, 1, TimeUnit.SECONDS, new ArrayBlockingQueue<Runnable>(10), new ThreadPoolExecutor.CallerRunsPolicy());
+        this.pool = new ThreadPoolExecutor(100, 200, 1, TimeUnit.SECONDS, new ArrayBlockingQueue<Runnable>(10), new ThreadPoolExecutor.CallerRunsPolicy());
     }
 
     public void shutdown() {

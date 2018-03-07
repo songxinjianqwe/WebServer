@@ -1,6 +1,6 @@
 package com.sinjinsong.webserver.core;
 
-import com.sinjinsong.webserver.core.servlet.base.RequestDispatcher;
+import com.sinjinsong.webserver.core.servlet.base.DispatcherServlet;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
@@ -16,7 +16,7 @@ public class Server {
     private ServerSocket server;
 
     private Acceptor acceptor;
-    private RequestDispatcher requestDispatcher;
+    private DispatcherServlet dispatcherServlet;
 
     public Server() {
         this(DEFAULT_PORT);
@@ -27,7 +27,7 @@ public class Server {
             server = new ServerSocket(port);
             acceptor = new Acceptor();
             acceptor.start();
-            requestDispatcher = new RequestDispatcher();
+            dispatcherServlet = new DispatcherServlet();
             log.info("服务器启动");
         } catch (IOException e) {
             e.printStackTrace();
@@ -38,7 +38,7 @@ public class Server {
 
     public void close() {
         acceptor.shutdown();
-        requestDispatcher.shutdown();
+        dispatcherServlet.shutdown();
     }
 
     private class Acceptor extends Thread {
@@ -68,7 +68,7 @@ public class Server {
                     //TCP的短连接，请求处理完即关闭
                     client = server.accept();
                     log.info("client:{}", client);
-                    requestDispatcher.doDispatch(client);
+                    dispatcherServlet.doDispatch(client);
                 } catch (IOException e) {
                     e.printStackTrace();
                 }

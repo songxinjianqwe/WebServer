@@ -134,6 +134,7 @@ public class Response {
                 e.printStackTrace();
             }
         }
+        log.info("请求处理完毕");
     }
     
     public void sendRedirect(String url){
