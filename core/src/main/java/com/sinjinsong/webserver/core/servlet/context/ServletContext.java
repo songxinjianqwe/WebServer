@@ -68,7 +68,7 @@ public class ServletContext {
     public HTTPSession getSession(String JSESSIONID) {
         return sessions.get(JSESSIONID);
     }
-
+    
     public HTTPSession createSession(Response response) {
         HTTPSession session = new HTTPSession(UUIDUtil.uuid());
         sessions.put(session.getId(), session);

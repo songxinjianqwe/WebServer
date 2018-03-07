@@ -1,20 +1,19 @@
 package com.sinjinsong.webserver.core.resource;
 
 import com.sinjinsong.webserver.core.constant.CharsetProperties;
-import com.sinjinsong.webserver.core.enumeration.HTTPStatus;
 import com.sinjinsong.webserver.core.exception.RequestParseException;
 import com.sinjinsong.webserver.core.exception.ResourceNotFoundException;
 import com.sinjinsong.webserver.core.exception.base.ServletException;
 import com.sinjinsong.webserver.core.exception.handler.ExceptionHandler;
 import com.sinjinsong.webserver.core.request.Request;
 import com.sinjinsong.webserver.core.response.Response;
+import com.sinjinsong.webserver.core.socket.NioSocketWrapper;
 import com.sinjinsong.webserver.core.template.TemplateResolver;
 import com.sinjinsong.webserver.core.util.IOUtil;
 import com.sinjinsong.webserver.core.util.MimeTypeUtil;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
-import java.net.Socket;
 
 /**
  * Created by SinjinSong on 2017/7/20.
@@ -27,7 +26,7 @@ public class ResourceHandler {
         this.exceptionHandler = exceptionHandler;
     }
     
-    public void handle(Request request, Response response, Socket client) {
+    public void handle(Request request, Response response, NioSocketWrapper socketWrapper) {
         String url = request.getUrl();
         try {
             if (ResourceHandler.class.getResource(url) == null) {
@@ -40,13 +39,12 @@ public class ResourceHandler {
                         .resolve(new String(body, CharsetProperties.UTF_8_CHARSET), request)
                         .getBytes(CharsetProperties.UTF_8_CHARSET);
             }
-            response.header(HTTPStatus.OK, MimeTypeUtil.getTypes(url))
-                    .body(body)
-                    .write();
+            response.setContentType(MimeTypeUtil.getTypes(url));
+            response.setBody(body);
         } catch (IOException e) {
-            exceptionHandler.handle(new RequestParseException(), response, client);
+            exceptionHandler.handle(new RequestParseException(), response, socketWrapper);
         } catch (ServletException e) {
-            exceptionHandler.handle(e, response, client);
+            exceptionHandler.handle(e, response, socketWrapper);
         } 
     }
 }

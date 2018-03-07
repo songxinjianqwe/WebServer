@@ -15,11 +15,12 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 
-import java.io.BufferedInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
+import java.nio.ByteBuffer;
+import java.nio.channels.SocketChannel;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -70,37 +71,35 @@ public class Request {
     private ServletContext servletContext;
     private Cookie[] cookies;
     private HTTPSession session;
-
+    
     /**
      * 读取请求体只能使用字节流，使用字符流读不到
      *
-     * @param in
+     * @param socketChannel
      * @throws RequestParseException
      */
-    public Request(InputStream in) throws RequestParseException, RequestInvalidException {
+    public Request(SocketChannel socketChannel) throws RequestParseException, RequestInvalidException, IOException {
         this.attributes = new HashMap<>();
+        ByteBuffer buffer = ByteBuffer.allocate(1024);
         log.info("开始读取Request");
-        BufferedInputStream bin = new BufferedInputStream(in);
-        byte[] buf = null;
-        try {
-            buf = new byte[bin.available()];
-            int len = bin.read(buf);
-            if (len <= 0) {
-                throw new RequestInvalidException();
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        while (socketChannel.read(buffer) > 0) {
+            buffer.flip();
+            baos.write(buffer.array());
         }
-
+        baos.close();
         String[] lines = null;
         try {
             //支持中文，对中文进行URL解码
-            lines = URLDecoder.decode(new String(buf, CharsetProperties.UTF_8_CHARSET), CharsetProperties.UTF_8).split(CharConstant.CRLF);
+            lines = URLDecoder.decode(new String(baos.toByteArray(), CharsetProperties.UTF_8_CHARSET), CharsetProperties.UTF_8).split(CharConstant.CRLF);
         } catch (UnsupportedEncodingException e) {
             e.printStackTrace();
         }
         log.info("Request读取完毕");
-        log.info("{}", Arrays.toString(lines));
+        log.info("请求行: {}", Arrays.toString(lines));
+        if (lines.length <= 1) {
+            throw new RequestInvalidException();
+        }
         try {
             parseHeaders(lines);
             if (headers.containsKey("Content-Length") && !headers.get("Content-Length").get(0).equals("0")) {

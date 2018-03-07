@@ -7,11 +7,11 @@ import com.sinjinsong.webserver.core.request.Request;
 import com.sinjinsong.webserver.core.resource.ResourceHandler;
 import com.sinjinsong.webserver.core.response.Response;
 import com.sinjinsong.webserver.core.servlet.context.ServletContext;
+import com.sinjinsong.webserver.core.socket.NioSocketWrapper;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
-import java.net.Socket;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -26,12 +26,12 @@ public class DispatcherServlet {
     private ExceptionHandler exceptionHandler;
     private ThreadPoolExecutor pool;
     private ServletContext servletContext;
-
+    
     public DispatcherServlet() throws IOException {
         this.servletContext = WebApplication.getServletContext();
         this.exceptionHandler = new ExceptionHandler();
         this.resourceHandler = new ResourceHandler(exceptionHandler);
-        this.pool = new ThreadPoolExecutor(100, 200, 1, TimeUnit.SECONDS, new ArrayBlockingQueue<Runnable>(10), new ThreadPoolExecutor.CallerRunsPolicy());
+        this.pool = new ThreadPoolExecutor(100, 200, 1, TimeUnit.SECONDS, new ArrayBlockingQueue<>(200), new ThreadPoolExecutor.CallerRunsPolicy());
     }
 
     public void shutdown() {
@@ -40,22 +40,23 @@ public class DispatcherServlet {
 
     /**
      * 所有请求都经过DispatcherServlet的转发
-     *
-     * @param client
      * @throws IOException
      * @throws ServletException
      */
-    public void doDispatch(Socket client) throws IOException {
-         Request request = null;
+    public void doDispatch(NioSocketWrapper socketWrapper) {
+        Request request = null;
         Response response = null;
         try {
             //解析请求
-            request = new Request(client.getInputStream());
-            response = new Response(client.getOutputStream());
+            request = new Request(socketWrapper.getSocketChannel());
+            response = new Response(socketWrapper.getSocketChannel());
             request.setServletContext(servletContext);
-            pool.execute(new RequestHandler(client, request, response, servletContext.dispatch(request.getUrl()), exceptionHandler, resourceHandler));
+            log.info("已经将请求放入worker线程池中");
+            pool.execute(new RequestHandler(socketWrapper, request, response, servletContext.dispatch(request.getUrl()), exceptionHandler, resourceHandler));
         } catch (ServletException e) {
-            exceptionHandler.handle(e, response, client);
+            exceptionHandler.handle(e, response, socketWrapper);
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 }

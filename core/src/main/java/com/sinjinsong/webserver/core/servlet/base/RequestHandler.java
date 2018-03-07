@@ -8,12 +8,14 @@ import com.sinjinsong.webserver.core.exception.handler.ExceptionHandler;
 import com.sinjinsong.webserver.core.request.Request;
 import com.sinjinsong.webserver.core.resource.ResourceHandler;
 import com.sinjinsong.webserver.core.response.Response;
+import com.sinjinsong.webserver.core.socket.NioSocketWrapper;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 
-import java.net.Socket;
+import java.io.IOException;
+import java.util.List;
 
 /**
  * Created by SinjinSong on 2017/7/21.
@@ -24,13 +26,17 @@ import java.net.Socket;
 @AllArgsConstructor
 @Slf4j
 public class RequestHandler implements Runnable {
-    private Socket client;
+    private NioSocketWrapper socketWrapper;
     private Request request;
     private Response response;
     private HTTPServlet servlet;
     private ExceptionHandler exceptionHandler;
     private ResourceHandler resourceHandler;
-
+    
+    
+    /**
+     * 在这里处理keep-alive
+     */
     @Override
     public void run() {
         try {
@@ -42,9 +48,9 @@ public class RequestHandler implements Runnable {
                 //首页
                 if (request.getUrl().equals("/")) {
                     request.setUrl("/index.html");
-                    resourceHandler.handle(request, response, client);
+                    resourceHandler.handle(request, response, socketWrapper);
                 } else {
-                    resourceHandler.handle(request, response, client);
+                    resourceHandler.handle(request, response, socketWrapper);
                 }
             } else {
                 if (servlet == null) {
@@ -54,13 +60,28 @@ public class RequestHandler implements Runnable {
                 //Servlet是单例多线程
                 //Servlet在RequestHandler中执行
                 servlet.service(request, response);
-                response.write();
             }
         } catch (ServletException e) {
-            exceptionHandler.handle(e, response, client);
+            exceptionHandler.handle(e, response, socketWrapper);
         } catch (Exception e) {
             //其他未知异常
-            exceptionHandler.handle(new ServerErrorException(), response, client);
+            exceptionHandler.handle(new ServerErrorException(), response, socketWrapper);
+        } finally {
+            response.writeToClient();
+            List<String> connection = request.getHeaders().get("Connection");
+            try {
+                if (connection != null && connection.get(0).equals("close")) {
+                    log.info("CLOSE: 客户端连接{} 已关闭", socketWrapper.getSocketChannel());
+                    socketWrapper.getSocketChannel().close();
+                } else {
+                    // keep-alive 重新注册到Poller中
+                    log.info("KEEP-ALIVE: 客户端连接{} 重新注册到Poller中", socketWrapper.getSocketChannel());
+                    socketWrapper.getPoller().register(socketWrapper.getSocketChannel(),false);
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
+        log.info("请求处理完毕");
     }
 }
