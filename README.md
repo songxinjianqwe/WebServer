@@ -32,23 +32,28 @@
 一个Acceptor阻塞式获取socket连接，然后线程池阻塞式等待socket读事件，处理业务逻辑，最后写回
 每个HTTP连接结束后由客户端关闭TCP连接
 
+使用JMeter进行压力测试：connection:close
 20个线程，每个线程循环访问100次，吞吐量为205个请求/sec，平均响应时间为2ms（tps：2ms/transaction）
-
+200个线程，每个线程循环访问100次，吞吐量为440个请求/sec,平均响应时间为346ms，错误率为5%
+20个线程，每个线程循环访问1000次，吞吐量为409个请求/sec,平均响应时间为40ms，错误率为0%
 
 
 ## NIO Reactor
 多个（1个或2个）Acceptor阻塞式获取socket连接，然后多个Poller（处理器个数个）非阻塞式轮询socket读事件，检测到读事件时将socket交给线程池处理业务逻辑
-实现HTTP的keep-alive
+实现HTTP的keep-alive（复用socket连接）
 
+使用JMeter进行压力测试：connection:keep-alive
 20个线程，每个线程循环访问100次，吞吐量为206个请求/sec，平均响应时间为2ms（tps：2ms/transaction）
+200个线程，每个线程循环访问100次，吞吐量为300个请求/sec,平均响应时间为600ms，错误率为0%
+20个线程，每个线程循环访问1000次，吞吐量为1006个请求/sec,平均响应时间为11ms，错误率为0%
 
 
 ## 未来希望添加的功能：
-- NIO实现多路复用
 - 手写WebSocket服务器，实现HTTP长连接
 - Filter
 - Listener
-
+- 实现Servlet3.1标准
+- 实现AsyncServlet
 
 ## 另附CSDN相关博客
 http://blog.csdn.net/songxinjianqwe/article/details/75670552
