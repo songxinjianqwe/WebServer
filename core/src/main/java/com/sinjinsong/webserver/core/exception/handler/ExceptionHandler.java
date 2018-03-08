@@ -22,7 +22,7 @@ public class ExceptionHandler {
         try {
             if (e instanceof RequestInvalidException) {
                 log.info("请求无法读取，丢弃");
-                socketWrapper.getSocketChannel().close();
+                socketWrapper.close();
             } else {
                 log.info("抛出异常:{}", e.getClass().getName());
                 e.printStackTrace();

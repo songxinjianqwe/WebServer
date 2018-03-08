@@ -55,11 +55,11 @@ public class Poller implements Runnable {
     }
 
     public void close() throws IOException {
+        for (NioSocketWrapper wrapper : sockets) {
+            wrapper.close();
+        }
         selector.close();
         events.clear();
-        for (NioSocketWrapper wrapper : sockets) {
-            wrapper.getSocketChannel().close();
-        }
         cleaner.shutdown();
     }
 
@@ -127,8 +127,8 @@ public class Poller implements Runnable {
                 if (wrapper.getSocketChannel().isOpen()) {
                     wrapper.getSocketChannel().register(wrapper.getPoller().getSelector(), SelectionKey.OP_READ, wrapper);
                     wrapper.setWaitBegin(System.currentTimeMillis());
-                }else{
-                    log.error("socket已经被关闭，无法注册到Poller",wrapper.getSocketChannel());
+                } else {
+                    log.error("socket已经被关闭，无法注册到Poller", wrapper.getSocketChannel());
                 }
             } catch (ClosedChannelException e) {
                 e.printStackTrace();
@@ -148,9 +148,8 @@ public class Poller implements Runnable {
                 if (System.currentTimeMillis() - wrapper.getWaitBegin() > server.getKeepAliveTimeout()) {
                     // 反注册
                     log.info("{} keepAlive已过期", wrapper.getSocketChannel());
-                    wrapper.getSocketChannel().keyFor(selector).cancel();
                     try {
-                        wrapper.getSocketChannel().close();
+                        wrapper.close();
                     } catch (IOException e) {
                         e.printStackTrace();
                     }

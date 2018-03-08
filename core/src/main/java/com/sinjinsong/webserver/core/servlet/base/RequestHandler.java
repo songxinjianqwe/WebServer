@@ -72,7 +72,7 @@ public class RequestHandler implements Runnable {
             try {
                 if (connection != null && connection.get(0).equals("close")) {
                     log.info("CLOSE: 客户端连接{} 已关闭", socketWrapper.getSocketChannel());
-                    socketWrapper.getSocketChannel().close();
+                    socketWrapper.close();
                 } else {
                     // keep-alive 重新注册到Poller中
                     log.info("KEEP-ALIVE: 客户端连接{} 重新注册到Poller中", socketWrapper.getSocketChannel());

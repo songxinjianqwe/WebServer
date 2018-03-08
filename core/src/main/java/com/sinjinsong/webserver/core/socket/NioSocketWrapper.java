@@ -5,6 +5,7 @@ import com.sinjinsong.webserver.core.connector.Poller;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 
+import java.io.IOException;
 import java.nio.channels.SocketChannel;
 
 /**
@@ -26,7 +27,11 @@ public class NioSocketWrapper {
         this.poller = poller;
         this.isNewSocket = isNewSocket;
     }
-
+    
+    public void close() throws IOException {
+        socketChannel.keyFor(poller.getSelector()).cancel();
+        socketChannel.close();
+    }
     @Override
     public String toString() {
         return socketChannel.toString();
