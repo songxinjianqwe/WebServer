@@ -58,6 +58,9 @@
 - Listener
 - 实现Servlet3.1标准
 - 实现AsyncServlet
+- 实现多应用隔离，自定义类加载器体系
 
 ## 另附CSDN相关博客
 http://blog.csdn.net/songxinjianqwe/article/details/75670552
+
+![image](http://markdown-1252651195.cossh.myqcloud.com/%E6%9C%AA%E5%91%BD%E5%90%8D%E6%96%87%E4%BB%B6.jpg)

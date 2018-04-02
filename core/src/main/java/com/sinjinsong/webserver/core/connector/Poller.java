@@ -11,14 +11,10 @@ import java.nio.channels.ClosedChannelException;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.SocketChannel;
-import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.List;
+import java.util.Map;
 import java.util.Queue;
-import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 
 /**
  * @author sinjinsong
@@ -30,32 +26,45 @@ public class Poller implements Runnable {
     private Selector selector;
     private Queue<PollerEvent> events;
     private String pollerName;
-    private List<NioSocketWrapper> sockets;
+    private Map<SocketChannel, NioSocketWrapper> sockets;
     private ScheduledExecutorService cleaner;
 
     public Poller(Server server, String pollerName) throws IOException {
-        this.sockets = new ArrayList<>();
+        this.sockets = new ConcurrentHashMap<>();
         this.server = server;
         this.selector = Selector.open();
         this.events = new ConcurrentLinkedQueue();
         this.pollerName = pollerName;
-        this.cleaner = Executors.newSingleThreadScheduledExecutor();
+        ThreadFactory threadFactory = new ThreadFactory() {
+            @Override
+            public Thread newThread(Runnable r) {
+                return new Thread(r, pollerName + "-Cleaner");
+            }
+        };
+        this.cleaner = Executors.newSingleThreadScheduledExecutor(threadFactory);
         cleaner.scheduleWithFixedDelay(new IdleSocketCleaner(), 0, server.getKeepAliveTimeout(), TimeUnit.MILLISECONDS);
     }
 
     public void register(SocketChannel socketChannel, boolean isNewSocket) {
         log.info("Acceptor将连接到的socket放入 {} 的Queue中", pollerName);
-        NioSocketWrapper wrapper = new NioSocketWrapper(server, socketChannel, this, isNewSocket);
-        events.offer(new PollerEvent(wrapper));
+        NioSocketWrapper wrapper;
         if (isNewSocket) {
-            sockets.add(wrapper);
+            // 设置waitBegin
+            wrapper = new NioSocketWrapper(server, socketChannel, this, isNewSocket);
+            // 用于cleaner检测超时的socket和关闭socket
+            sockets.put(socketChannel,wrapper);
+        }else {
+            wrapper = sockets.get(socketChannel);
+            wrapper.setWorking(false);
         }
+        wrapper.setWaitBegin(System.currentTimeMillis());
+        events.offer(new PollerEvent(wrapper));
         // 某个线程调用select()方法后阻塞了，即使没有通道已经就绪，也有办法让其从select()方法返回。只要让其它线程在第一个线程调用select()方法的那个对象上调用Selector.wakeup()方法即可。阻塞在select()方法上的线程会立马返回。
         selector.wakeup();
     }
 
     public void close() throws IOException {
-        for (NioSocketWrapper wrapper : sockets) {
+        for (NioSocketWrapper wrapper : sockets.values()) {
             wrapper.close();
         }
         selector.close();
@@ -96,14 +105,14 @@ public class Poller implements Runnable {
     }
 
     private void processSocket(NioSocketWrapper attachment) {
+        attachment.setWorking(true);
         server.execute(attachment);
-
     }
 
     private boolean events() {
         log.info("Queue大小为{},清空Queue,将连接到的Socket注册到selector中", events.size());
         boolean result = false;
-        PollerEvent pollerEvent = null;
+        PollerEvent pollerEvent;
         for (int i = 0, size = events.size(); i < size && (pollerEvent = events.poll()) != null; i++) {
             result = true;
             pollerEvent.run();
@@ -142,20 +151,28 @@ public class Poller implements Runnable {
     private class IdleSocketCleaner implements Runnable {
         @Override
         public void run() {
-            log.info("目前缓存中的socket: {}", sockets);
-            for (Iterator<NioSocketWrapper> it = sockets.iterator(); it.hasNext(); ) {
-                NioSocketWrapper wrapper = it.next();
+            log.info("{}的Cleaner 检测socket中...", Poller.this.pollerName);
+            for (Iterator<Map.Entry<SocketChannel,NioSocketWrapper>> it = sockets.entrySet().iterator(); it.hasNext(); ) {
+                NioSocketWrapper wrapper = it.next().getValue();
+                log.info("缓存中的socket:{}", wrapper);
+                if (wrapper.isWorking()) {
+                    log.info("该socket正在工作中，不予关闭");
+                    continue;
+                }
                 if (System.currentTimeMillis() - wrapper.getWaitBegin() > server.getKeepAliveTimeout()) {
                     // 反注册
                     log.info("{} keepAlive已过期", wrapper.getSocketChannel());
                     try {
-                        wrapper.close();
+                        if (wrapper.getSocketChannel().isConnected()) {
+                            wrapper.close();
+                        }
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
                     it.remove();
                 }
             }
+            log.info("检测结束...");
         }
     }
 }

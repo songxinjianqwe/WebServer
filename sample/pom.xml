@@ -47,7 +47,7 @@
             <version>${log4j.version}</version>
         </dependency>
     </dependencies>
-
+    
     <build>
         <finalName>WebServer</finalName>
         <resources>
@@ -89,7 +89,6 @@
                     </execution>
                 </executions>
             </plugin>
-
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>

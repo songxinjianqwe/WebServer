@@ -29,9 +29,8 @@ public class Server {
     private List<Poller> pollers;
     private AtomicInteger pollerRotater = new AtomicInteger(0);
     private int maxKeepAliveRequests = 100;
-    private AtomicInteger aliveRequests = new AtomicInteger(0);
     private int keepAliveTimeout = 5000;
-
+    
     public Server() {
         this(DEFAULT_PORT);
     }
@@ -39,7 +38,6 @@ public class Server {
     public Server(int port) {
         try {
             initServerSocket(port);
-            WebApplication.init();
             initPoller();
             initAcceptor();
             dispatcherServlet = new DispatcherServlet();
@@ -84,11 +82,6 @@ public class Server {
         return pollers.get(idx);
     }
 
-
-    public int getMaxKeepAliveRequests() {
-        return maxKeepAliveRequests;
-    }
-
     private void initAcceptor() {
         acceptors = new ArrayList<>(acceptorCount);
         for (int i = 0; i < acceptorCount; i++) {
@@ -128,7 +121,6 @@ public class Server {
      * @return
      */
     public void setSocketOptions(SocketChannel socket) throws IOException {
-        aliveRequests.incrementAndGet();
         server.configureBlocking(false);
         getPoller().register(socket, true);
         server.configureBlocking(true);

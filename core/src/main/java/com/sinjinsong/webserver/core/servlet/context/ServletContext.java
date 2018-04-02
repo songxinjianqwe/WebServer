@@ -36,7 +36,7 @@ public class ServletContext {
     }
 
     //由URL得到对应的Servlet类
-    public HTTPServlet dispatch(String url) {
+    public HTTPServlet mapping(String url) {
         return servlet.get(mapping.get(url));
     }
 

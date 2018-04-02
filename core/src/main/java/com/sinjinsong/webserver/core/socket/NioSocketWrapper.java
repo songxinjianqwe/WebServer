@@ -20,12 +20,14 @@ public class NioSocketWrapper {
     private Poller poller;
     private boolean isNewSocket;
     private long waitBegin;
-
+    private boolean isWorking;
+    
     public NioSocketWrapper(Server server, SocketChannel socketChannel, Poller poller, boolean isNewSocket) {
         this.server = server;
         this.socketChannel = socketChannel;
         this.poller = poller;
         this.isNewSocket = isNewSocket;
+        this.isWorking = false;
     }
     
     public void close() throws IOException {

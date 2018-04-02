@@ -209,7 +209,7 @@ public class Request {
 
     private void parseBody(String body) {
         log.info("解析请求体");
-        parseParams(body);
+        parseParams(body.trim());
         if (this.params == null) {
             this.params = new HashMap<>();
         }
@@ -224,6 +224,7 @@ public class Request {
             String[] kv = param.split("=");
             String key = kv[0];
             String[] values = kv[1].split(",");
+            
             this.params.put(key, Arrays.asList(values));
         }
     }

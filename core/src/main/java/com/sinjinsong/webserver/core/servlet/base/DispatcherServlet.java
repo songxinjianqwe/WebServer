@@ -13,6 +13,7 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
 import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
@@ -26,12 +27,20 @@ public class DispatcherServlet {
     private ExceptionHandler exceptionHandler;
     private ThreadPoolExecutor pool;
     private ServletContext servletContext;
-    
+
     public DispatcherServlet() throws IOException {
         this.servletContext = WebApplication.getServletContext();
         this.exceptionHandler = new ExceptionHandler();
         this.resourceHandler = new ResourceHandler(exceptionHandler);
-        this.pool = new ThreadPoolExecutor(100, 200, 1, TimeUnit.SECONDS, new ArrayBlockingQueue<>(200), new ThreadPoolExecutor.CallerRunsPolicy());
+        ThreadFactory threadFactory = new ThreadFactory() {
+            private int count;
+
+            @Override
+            public Thread newThread(Runnable r) {
+                return new Thread(r, "Worker Pool-" + count++);
+            }
+        };
+        this.pool = new ThreadPoolExecutor(2, 2, 1, TimeUnit.SECONDS, new ArrayBlockingQueue<>(200), threadFactory,new ThreadPoolExecutor.CallerRunsPolicy());
     }
 
     public void shutdown() {
@@ -40,6 +49,7 @@ public class DispatcherServlet {
 
     /**
      * 所有请求都经过DispatcherServlet的转发
+     *
      * @throws IOException
      * @throws ServletException
      */
@@ -52,7 +62,7 @@ public class DispatcherServlet {
             response = new Response(socketWrapper.getSocketChannel());
             request.setServletContext(servletContext);
             log.info("已经将请求放入worker线程池中");
-            pool.execute(new RequestHandler(socketWrapper, request, response, servletContext.dispatch(request.getUrl()), exceptionHandler, resourceHandler));
+            pool.execute(new RequestHandler(socketWrapper, request, response, servletContext.mapping(request.getUrl()), exceptionHandler, resourceHandler));
         } catch (ServletException e) {
             exceptionHandler.handle(e, response, socketWrapper);
         } catch (IOException e) {
