@@ -40,7 +40,7 @@ public class DispatcherServlet {
                 return new Thread(r, "Worker Pool-" + count++);
             }
         };
-        this.pool = new ThreadPoolExecutor(2, 2, 1, TimeUnit.SECONDS, new ArrayBlockingQueue<>(200), threadFactory,new ThreadPoolExecutor.CallerRunsPolicy());
+        this.pool = new ThreadPoolExecutor(100, 100, 1, TimeUnit.SECONDS, new ArrayBlockingQueue<>(200), threadFactory,new ThreadPoolExecutor.CallerRunsPolicy());
     }
 
     public void shutdown() {

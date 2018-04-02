@@ -52,8 +52,8 @@ public class Poller implements Runnable {
             // 设置waitBegin
             wrapper = new NioSocketWrapper(server, socketChannel, this, isNewSocket);
             // 用于cleaner检测超时的socket和关闭socket
-            sockets.put(socketChannel,wrapper);
-        }else {
+            sockets.put(socketChannel, wrapper);
+        } else {
             wrapper = sockets.get(socketChannel);
             wrapper.setWorking(false);
         }
@@ -152,9 +152,14 @@ public class Poller implements Runnable {
         @Override
         public void run() {
             log.info("{}的Cleaner 检测socket中...", Poller.this.pollerName);
-            for (Iterator<Map.Entry<SocketChannel,NioSocketWrapper>> it = sockets.entrySet().iterator(); it.hasNext(); ) {
+            for (Iterator<Map.Entry<SocketChannel, NioSocketWrapper>> it = sockets.entrySet().iterator(); it.hasNext(); ) {
                 NioSocketWrapper wrapper = it.next().getValue();
                 log.info("缓存中的socket:{}", wrapper);
+                if (!wrapper.getSocketChannel().isConnected()) {
+                    log.info("该socket已被关闭");
+                    it.remove();
+                    continue;
+                }
                 if (wrapper.isWorking()) {
                     log.info("该socket正在工作中，不予关闭");
                     continue;
@@ -163,9 +168,7 @@ public class Poller implements Runnable {
                     // 反注册
                     log.info("{} keepAlive已过期", wrapper.getSocketChannel());
                     try {
-                        if (wrapper.getSocketChannel().isConnected()) {
-                            wrapper.close();
-                        }
+                        wrapper.close();
                     } catch (IOException e) {
                         e.printStackTrace();
                     }

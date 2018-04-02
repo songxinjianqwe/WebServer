@@ -20,17 +20,16 @@ import java.util.concurrent.atomic.AtomicInteger;
 @Slf4j
 public class Server {
     private static final int DEFAULT_PORT = 8080;
-    private int acceptorCount = 2;
     private int pollerCount = Math.min(2, Runtime.getRuntime().availableProcessors());
     private ServerSocketChannel server;
     private DispatcherServlet dispatcherServlet;
     private volatile boolean isRunning = true;
-    protected List<Acceptor> acceptors;
+    private Acceptor acceptor;
     private List<Poller> pollers;
     private AtomicInteger pollerRotater = new AtomicInteger(0);
     private int maxKeepAliveRequests = 100;
     private int keepAliveTimeout = 5000;
-    
+
     public Server() {
         this(DEFAULT_PORT);
     }
@@ -83,15 +82,11 @@ public class Server {
     }
 
     private void initAcceptor() {
-        acceptors = new ArrayList<>(acceptorCount);
-        for (int i = 0; i < acceptorCount; i++) {
-            String acceptorName = "Acceptor-" + i;
-            Acceptor acceptor = new Acceptor(this, acceptorName);
-            Thread t = new Thread(acceptor, acceptorName);
-            t.setDaemon(true);
-            t.start();
-            acceptors.add(acceptor);
-        }
+        String acceptorName = "Acceptor";
+        this.acceptor = new Acceptor(this, acceptorName);
+        Thread t = new Thread(acceptor, acceptorName);
+        t.setDaemon(true);
+        t.start();
     }
 
     public void close() {

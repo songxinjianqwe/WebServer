@@ -19,8 +19,8 @@ public class NioSocketWrapper {
     private SocketChannel socketChannel;
     private Poller poller;
     private boolean isNewSocket;
-    private long waitBegin;
-    private boolean isWorking;
+    private volatile long waitBegin;
+    private volatile boolean isWorking;
     
     public NioSocketWrapper(Server server, SocketChannel socketChannel, Poller poller, boolean isNewSocket) {
         this.server = server;
