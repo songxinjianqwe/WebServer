@@ -209,7 +209,15 @@ public class Request {
 
     private void parseBody(String body) {
         log.info("解析请求体");
-        parseParams(body.trim());
+        byte[] bytes = body.getBytes(CharsetProperties.UTF_8_CHARSET);
+        List<String> lengths = this.headers.get("Content-Length");
+        if(lengths != null){
+            int length = Integer.parseInt(lengths.get(0));
+            log.info("length:{}",length);
+            parseParams(new String(bytes,0,length,CharsetProperties.UTF_8_CHARSET));
+        }else{
+            parseParams(body.trim());
+        }
         if (this.params == null) {
             this.params = new HashMap<>();
         }
