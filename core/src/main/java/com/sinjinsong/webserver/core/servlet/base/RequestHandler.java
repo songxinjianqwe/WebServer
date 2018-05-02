@@ -29,7 +29,7 @@ public class RequestHandler implements Runnable {
     private NioSocketWrapper socketWrapper;
     private Request request;
     private Response response;
-    private HTTPServlet servlet;
+    private HTTPServlet HTTPServlet;
     private ExceptionHandler exceptionHandler;
     private ResourceHandler resourceHandler;
     
@@ -53,13 +53,13 @@ public class RequestHandler implements Runnable {
                     resourceHandler.handle(request, response, socketWrapper);
                 }
             } else {
-                if (servlet == null) {
+                if (HTTPServlet == null) {
                     throw new ServletNotFoundException();
                 }
                 //处理动态资源，交由某个Servlet执行
                 //Servlet是单例多线程
                 //Servlet在RequestHandler中执行
-                servlet.service(request, response);
+                HTTPServlet.service(request, response);
             }
         } catch (ServletException e) {
             exceptionHandler.handle(e, response, socketWrapper);

@@ -5,7 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.util.Collection;
 
-import static com.sinjinsong.webserver.core.constant.Context.DEFAULT_CONTENT_TYPE;
+import static com.sinjinsong.webserver.core.constant.ContextConstant.DEFAULT_CONTENT_TYPE;
 
 /**
  * Created by SinjinSong on 2017/7/20.

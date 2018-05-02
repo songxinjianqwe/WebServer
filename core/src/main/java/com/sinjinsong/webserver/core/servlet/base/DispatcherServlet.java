@@ -28,13 +28,12 @@ public class DispatcherServlet {
     private ThreadPoolExecutor pool;
     private ServletContext servletContext;
 
-    public DispatcherServlet() throws IOException {
+    public DispatcherServlet()  {
         this.servletContext = WebApplication.getServletContext();
         this.exceptionHandler = new ExceptionHandler();
         this.resourceHandler = new ResourceHandler(exceptionHandler);
         ThreadFactory threadFactory = new ThreadFactory() {
             private int count;
-
             @Override
             public Thread newThread(Runnable r) {
                 return new Thread(r, "Worker Pool-" + count++);
@@ -62,7 +61,7 @@ public class DispatcherServlet {
             response = new Response(socketWrapper.getSocketChannel());
             request.setServletContext(servletContext);
             log.info("已经将请求放入worker线程池中");
-            pool.execute(new RequestHandler(socketWrapper, request, response, servletContext.mapping(request.getUrl()), exceptionHandler, resourceHandler));
+            pool.execute(new RequestHandler(socketWrapper, request, response, servletContext.map(request.getUrl()), exceptionHandler, resourceHandler));
         } catch (ServletException e) {
             exceptionHandler.handle(e, response, socketWrapper);
         } catch (IOException e) {

@@ -14,7 +14,7 @@ import java.util.List;
 import static com.sinjinsong.webserver.core.constant.CharConstant.BLANK;
 import static com.sinjinsong.webserver.core.constant.CharConstant.CRLF;
 import static com.sinjinsong.webserver.core.constant.CharsetProperties.UTF_8_CHARSET;
-import static com.sinjinsong.webserver.core.constant.Context.DEFAULT_CONTENT_TYPE;
+import static com.sinjinsong.webserver.core.constant.ContextConstant.DEFAULT_CONTENT_TYPE;
 
 /**
  * Created by SinjinSong on 2017/7/20.

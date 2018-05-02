@@ -1,33 +1,48 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <web-app>
     
-    <servlet>
-        <servlet-name>LoginServlet</servlet-name>
-        <servlet-class>com.sinjinsong.webserver.sample.servlet.LoginServlet</servlet-class>
-    </servlet>
-    <servlet>
-        <servlet-name>LogoutServlet</servlet-name>
-        <servlet-class>com.sinjinsong.webserver.sample.servlet.LogoutServlet</servlet-class>
-    </servlet>
-    <servlet>
-        <servlet-name>UserServlet</servlet-name>
-        <servlet-class>com.sinjinsong.webserver.sample.servlet.UserServlet</servlet-class>
-    </servlet>
+    <HTTPServlet>
+        <HTTPServlet-name>LoginServlet</HTTPServlet-name>
+        <HTTPServlet-class>com.sinjinsong.webserver.sample.web.HTTPServlet.LoginServlet</HTTPServlet-class>
+    </HTTPServlet>
     
-    <servlet-mapping>
-        <servlet-name>LoginServlet</servlet-name>
+    <HTTPServlet>
+        <HTTPServlet-name>LogoutServlet</HTTPServlet-name>
+        <HTTPServlet-class>com.sinjinsong.webserver.sample.web.HTTPServlet.LogoutServlet</HTTPServlet-class>
+    </HTTPServlet>
+    
+    <HTTPServlet>
+        <HTTPServlet-name>UserServlet</HTTPServlet-name>
+        <HTTPServlet-class>com.sinjinsong.webserver.sample.web.HTTPServlet.UserServlet</HTTPServlet-class>
+    </HTTPServlet>
+    
+    <HTTPServlet-mapping>
+        <HTTPServlet-name>LoginServlet</HTTPServlet-name>
         <url-pattern>/login</url-pattern>
-    </servlet-mapping>
+    </HTTPServlet-mapping>
     
-    <servlet-mapping>
-        <servlet-name>LogoutServlet</servlet-name>
+    <HTTPServlet-mapping>
+        <HTTPServlet-name>LogoutServlet</HTTPServlet-name>
         <url-pattern>/logout</url-pattern>
-    </servlet-mapping>
+    </HTTPServlet-mapping>
 
-    <servlet-mapping>
-        <servlet-name>UserServlet</servlet-name>
+    <HTTPServlet-mapping>
+        <HTTPServlet-name>UserServlet</HTTPServlet-name>
         <url-pattern>/user</url-pattern>
-    </servlet-mapping>
-
+    </HTTPServlet-mapping>
+    
+    
+    
+    
+    <!--Filter-->
+    <filter>
+        <filter-name>LoginFilter</filter-name>
+        <filter-class>com.sinjinsong.webserver.sample.web.filter.LoginFilter</filter-class>
+    </filter>
+    
+    <filter-mapping>
+        <filter-name>LoginFilter</filter-name>
+        <url-pattern>/</url-pattern>
+    </filter-mapping>
 </web-app>
     

@@ -54,6 +54,12 @@
             <artifactId>dom4j</artifactId>
             <version>1.6.1</version>
         </dependency>
+        <!-- https://mvnrepository.com/artifact/org.springframework/spring-core -->
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-core</artifactId>
+            <version>5.0.5.RELEASE</version>
+        </dependency>
     </dependencies>
 
 

@@ -13,12 +13,12 @@ import java.util.concurrent.TimeUnit;
  * @date 2018/5/2
  */
 @Slf4j
-public class IdleSocketCleaner implements Runnable {
+public class IdleConnectionCleaner implements Runnable {
     private ScheduledExecutorService executor;
     private List<Poller> pollers;
     private int keepAliveTimeout;
 
-    public IdleSocketCleaner(List<Poller> pollers, int keepAliveTimeout) {
+    public IdleConnectionCleaner(List<Poller> pollers, int keepAliveTimeout) {
         this.pollers = pollers;
         this.keepAliveTimeout = keepAliveTimeout;
     }
@@ -27,7 +27,7 @@ public class IdleSocketCleaner implements Runnable {
         ThreadFactory threadFactory = new ThreadFactory() {
             @Override
             public Thread newThread(Runnable r) {
-                return new Thread(r, "IdleSocketCleaner");
+                return new Thread(r, "IdleConnectionCleaner");
             }
         };
         executor = Executors.newSingleThreadScheduledExecutor(threadFactory);

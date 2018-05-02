@@ -10,7 +10,7 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
 
-import static com.sinjinsong.webserver.core.constant.Context.ERROR_PAGE;
+import static com.sinjinsong.webserver.core.constant.ContextConstant.ERROR_PAGE;
 
 /**
  * Created by SinjinSong on 2017/7/20.

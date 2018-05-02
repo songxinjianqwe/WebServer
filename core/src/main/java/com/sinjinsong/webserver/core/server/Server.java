@@ -1,7 +1,7 @@
 package com.sinjinsong.webserver.core.server;
 
 import com.sinjinsong.webserver.core.connector.Acceptor;
-import com.sinjinsong.webserver.core.connector.IdleSocketCleaner;
+import com.sinjinsong.webserver.core.connector.IdleConnectionCleaner;
 import com.sinjinsong.webserver.core.connector.Poller;
 import com.sinjinsong.webserver.core.servlet.base.DispatcherServlet;
 import com.sinjinsong.webserver.core.wrapper.NioSocketWrapper;
@@ -31,7 +31,7 @@ public class Server {
     private AtomicInteger pollerRotater = new AtomicInteger(0);
     private int maxKeepAliveRequests = 100;
     private int keepAliveTimeout = 5000;
-    private IdleSocketCleaner cleaner;
+    private IdleConnectionCleaner cleaner;
 
     public Server() {
         this(DEFAULT_PORT);
@@ -101,7 +101,7 @@ public class Server {
      * 初始化IdleSocketCleaner
      */
     private void initIdleSocketCleaner() {
-        cleaner = new IdleSocketCleaner(pollers,keepAliveTimeout);
+        cleaner = new IdleConnectionCleaner(pollers,keepAliveTimeout);
         cleaner.start();
     }
 

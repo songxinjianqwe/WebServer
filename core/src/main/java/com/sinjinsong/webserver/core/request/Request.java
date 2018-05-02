@@ -62,6 +62,7 @@ import java.util.Map;
 @Setter
 @Slf4j
 public class Request {
+    
     private RequestHandler requestHandler;
     private RequestMethod method;
     private String url;
@@ -154,6 +155,10 @@ public class Request {
         }
         session = servletContext.createSession(requestHandler.getResponse());
         return session;
+    }
+    
+    public String getServletPath() {
+        return url;
     }
 
     private void parseHeaders(String[] lines) {

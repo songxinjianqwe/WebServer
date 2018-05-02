@@ -1,4 +1,4 @@
-package com.sinjinsong.webserver.sample.servlet;
+package com.sinjinsong.webserver.sample.web.servlet;
 
 import com.sinjinsong.webserver.core.exception.base.ServletException;
 import com.sinjinsong.webserver.core.request.Request;
@@ -16,10 +16,21 @@ import java.util.Map;
  */
 @Slf4j
 public class LoginServlet extends HTTPServlet {
+    
     private UserService userService;
 
     public LoginServlet() {
         userService = new UserService();
+    }
+
+    @Override
+    public void init() {
+        log.info("LoginServlet init...");
+    }
+
+    @Override
+    public void destroy() {
+        log.info("LoginServlet destroy...");
     }
 
     @Override

@@ -12,7 +12,9 @@ import java.io.IOException;
  * Created by SinjinSong on 2017/7/21.
  */
 @Slf4j
-public abstract class HTTPServlet {
+public abstract class HTTPServlet implements Servlet {
+
+    
     public void service(Request request, Response response) throws ServletException, IOException {
         if (request.getMethod() == RequestMethod.GET) {
             doGet(request, response);
