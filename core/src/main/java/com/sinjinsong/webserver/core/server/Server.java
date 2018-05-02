@@ -1,9 +1,10 @@
-package com.sinjinsong.webserver.core;
+package com.sinjinsong.webserver.core.server;
 
 import com.sinjinsong.webserver.core.connector.Acceptor;
+import com.sinjinsong.webserver.core.connector.IdleSocketCleaner;
 import com.sinjinsong.webserver.core.connector.Poller;
 import com.sinjinsong.webserver.core.servlet.base.DispatcherServlet;
-import com.sinjinsong.webserver.core.socket.NioSocketWrapper;
+import com.sinjinsong.webserver.core.wrapper.NioSocketWrapper;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
@@ -19,6 +20,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 @Slf4j
 public class Server {
+
     private static final int DEFAULT_PORT = 8080;
     private int pollerCount = Math.min(2, Runtime.getRuntime().availableProcessors());
     private ServerSocketChannel server;
@@ -29,7 +31,8 @@ public class Server {
     private AtomicInteger pollerRotater = new AtomicInteger(0);
     private int maxKeepAliveRequests = 100;
     private int keepAliveTimeout = 5000;
-    
+    private IdleSocketCleaner cleaner;
+
     public Server() {
         this(DEFAULT_PORT);
     }
@@ -39,6 +42,7 @@ public class Server {
             initServerSocket(port);
             initPoller();
             initAcceptor();
+            initIdleSocketCleaner();
             dispatcherServlet = new DispatcherServlet();
             log.info("服务器启动");
         } catch (Exception e) {
@@ -48,7 +52,8 @@ public class Server {
 
         }
     }
-
+    
+    
     public void execute(NioSocketWrapper socketWrapper) {
         dispatcherServlet.doDispatch(socketWrapper);
     }
@@ -81,15 +86,27 @@ public class Server {
         return pollers.get(idx);
     }
 
+
+    /**
+     * 初始化Acceptor
+     */
     private void initAcceptor() {
-        String acceptorName = "Acceptor";
-        this.acceptor = new Acceptor(this, acceptorName);
-        Thread t = new Thread(acceptor, acceptorName);
+        this.acceptor = new Acceptor(this);
+        Thread t = new Thread(acceptor, "Acceptor");
         t.setDaemon(true);
         t.start();
     }
 
+    /**
+     * 初始化IdleSocketCleaner
+     */
+    private void initIdleSocketCleaner() {
+        cleaner = new IdleSocketCleaner(pollers,keepAliveTimeout);
+        cleaner.start();
+    }
+
     public void close() {
+        cleaner.shutdown();
         for (Poller poller : pollers) {
             try {
                 poller.close();
@@ -97,9 +114,11 @@ public class Server {
                 e.printStackTrace();
             }
         }
+        
         isRunning = false;
         dispatcherServlet.shutdown();
     }
+
 
     public boolean isRunning() {
         return isRunning;

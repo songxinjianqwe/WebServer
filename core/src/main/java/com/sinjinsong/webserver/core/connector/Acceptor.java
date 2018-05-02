@@ -1,6 +1,6 @@
 package com.sinjinsong.webserver.core.connector;
 
-import com.sinjinsong.webserver.core.Server;
+import com.sinjinsong.webserver.core.server.Server;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
@@ -13,10 +13,9 @@ import java.nio.channels.SocketChannel;
 @Slf4j
 public class Acceptor implements Runnable {
     private Server server;
-    private String acceptorName;
-    public Acceptor(Server server,String acceptorName) {
+    
+    public Acceptor(Server server) {
         this.server = server;
-        this.acceptorName = acceptorName;
     }
     
     @Override

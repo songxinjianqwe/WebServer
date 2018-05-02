@@ -147,7 +147,7 @@ public class Request {
             if (cookie.getKey().equals("JSESSIONID")) {
                 HTTPSession currentSession = servletContext.getSession(cookie.getValue());
                 if (currentSession != null) {
-                    this.session = currentSession;
+                    session = currentSession;
                     return session;
                 }
             }

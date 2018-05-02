@@ -4,7 +4,7 @@ import com.sinjinsong.webserver.core.exception.RequestInvalidException;
 import com.sinjinsong.webserver.core.exception.base.ServletException;
 import com.sinjinsong.webserver.core.response.Header;
 import com.sinjinsong.webserver.core.response.Response;
-import com.sinjinsong.webserver.core.socket.NioSocketWrapper;
+import com.sinjinsong.webserver.core.wrapper.NioSocketWrapper;
 import com.sinjinsong.webserver.core.util.IOUtil;
 import lombok.extern.slf4j.Slf4j;
 

@@ -41,7 +41,7 @@ public class ServletContext {
     }
 
     //从web.xml读到servlet映射
-    public void init() throws ClassNotFoundException, IllegalAccessException, InstantiationException {
+    public synchronized void init() throws ClassNotFoundException, IllegalAccessException, InstantiationException {
         this.servlet = new HashMap<>();
         this.mapping = new HashMap<>();
         this.attributes = new ConcurrentHashMap<>();
@@ -69,7 +69,7 @@ public class ServletContext {
         return sessions.get(JSESSIONID);
     }
     
-    public HTTPSession createSession(Response response) {
+    public synchronized HTTPSession createSession(Response response) {
         HTTPSession session = new HTTPSession(UUIDUtil.uuid());
         sessions.put(session.getId(), session);
         response.addCookie(new Cookie("JSESSIONID", session.getId()));

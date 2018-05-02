@@ -7,7 +7,7 @@ import com.sinjinsong.webserver.core.exception.base.ServletException;
 import com.sinjinsong.webserver.core.exception.handler.ExceptionHandler;
 import com.sinjinsong.webserver.core.request.Request;
 import com.sinjinsong.webserver.core.response.Response;
-import com.sinjinsong.webserver.core.socket.NioSocketWrapper;
+import com.sinjinsong.webserver.core.wrapper.NioSocketWrapper;
 import com.sinjinsong.webserver.core.template.TemplateResolver;
 import com.sinjinsong.webserver.core.util.IOUtil;
 import com.sinjinsong.webserver.core.util.MimeTypeUtil;

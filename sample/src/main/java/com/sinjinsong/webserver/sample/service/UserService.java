@@ -19,11 +19,11 @@ public class UserService {
     }
     
     public boolean login(String username,String password){
-//        try {
-//            Thread.sleep(10000);
-//        } catch (InterruptedException e) {
-//            e.printStackTrace();
-//        }
+        try {
+            Thread.sleep(10000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
         String val = users.get(username);
         if(password.equals(val)) {
             online.put(username,"");
@@ -31,5 +31,4 @@ public class UserService {
         }
         return false;
     }
-    
 }

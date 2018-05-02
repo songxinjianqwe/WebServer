@@ -1,4 +1,4 @@
-package com.sinjinsong.webserver.core;
+package com.sinjinsong.webserver.core.server;
 
 import com.sinjinsong.webserver.core.servlet.context.ServletContext;
 

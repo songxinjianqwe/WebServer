@@ -1,7 +1,7 @@
 package com.sinjinsong.webserver.core.connector;
 
-import com.sinjinsong.webserver.core.Server;
-import com.sinjinsong.webserver.core.socket.NioSocketWrapper;
+import com.sinjinsong.webserver.core.server.Server;
+import com.sinjinsong.webserver.core.wrapper.NioSocketWrapper;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
@@ -27,7 +27,6 @@ public class Poller implements Runnable {
     private Queue<PollerEvent> events;
     private String pollerName;
     private Map<SocketChannel, NioSocketWrapper> sockets;
-    private ScheduledExecutorService cleaner;
 
     public Poller(Server server, String pollerName) throws IOException {
         this.sockets = new ConcurrentHashMap<>();
@@ -35,14 +34,6 @@ public class Poller implements Runnable {
         this.selector = Selector.open();
         this.events = new ConcurrentLinkedQueue();
         this.pollerName = pollerName;
-        ThreadFactory threadFactory = new ThreadFactory() {
-            @Override
-            public Thread newThread(Runnable r) {
-                return new Thread(r, pollerName + "-Cleaner");
-            }
-        };
-        this.cleaner = Executors.newSingleThreadScheduledExecutor(threadFactory);
-        cleaner.scheduleWithFixedDelay(new IdleSocketCleaner(), 0, server.getKeepAliveTimeout(), TimeUnit.MILLISECONDS);
     }
 
     public void register(SocketChannel socketChannel, boolean isNewSocket) {
@@ -69,7 +60,6 @@ public class Poller implements Runnable {
         }
         selector.close();
         events.clear();
-        cleaner.shutdown();
     }
 
     @Override
@@ -124,6 +114,39 @@ public class Poller implements Runnable {
         return selector;
     }
 
+    public String getPollerName() {
+        return pollerName;
+    }
+    
+    public void cleanTimeoutSockets() {
+        for (Iterator<Map.Entry<SocketChannel, NioSocketWrapper>> it = sockets.entrySet().iterator(); it.hasNext(); ) {
+            NioSocketWrapper wrapper = it.next().getValue();
+            log.info("缓存中的socket:{}", wrapper);
+            if (!wrapper.getSocketChannel().isConnected()) {
+                log.info("该socket已被关闭");
+                it.remove();
+                continue;
+            }
+            if (wrapper.isWorking()) {
+                log.info("该socket正在工作中，不予关闭");
+                continue;
+            }
+            if (System.currentTimeMillis() - wrapper.getWaitBegin() > server.getKeepAliveTimeout()) {
+                // 反注册
+                log.info("{} keepAlive已过期", wrapper.getSocketChannel());
+                try {
+                    wrapper.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                it.remove();
+            }
+        }
+    }
+
+
+    
+    
     @Data
     @AllArgsConstructor
     private static class PollerEvent implements Runnable {
@@ -142,40 +165,6 @@ public class Poller implements Runnable {
             } catch (ClosedChannelException e) {
                 e.printStackTrace();
             }
-        }
-    }
-
-    /**
-     * Cleaner与Poller/PollerEvent不在同一个线程中，可能会并发执行
-     */
-    private class IdleSocketCleaner implements Runnable {
-        @Override
-        public void run() {
-            log.info("{}的Cleaner 检测socket中...", Poller.this.pollerName);
-            for (Iterator<Map.Entry<SocketChannel, NioSocketWrapper>> it = sockets.entrySet().iterator(); it.hasNext(); ) {
-                NioSocketWrapper wrapper = it.next().getValue();
-                log.info("缓存中的socket:{}", wrapper);
-                if (!wrapper.getSocketChannel().isConnected()) {
-                    log.info("该socket已被关闭");
-                    it.remove();
-                    continue;
-                }
-                if (wrapper.isWorking()) {
-                    log.info("该socket正在工作中，不予关闭");
-                    continue;
-                }
-                if (System.currentTimeMillis() - wrapper.getWaitBegin() > server.getKeepAliveTimeout()) {
-                    // 反注册
-                    log.info("{} keepAlive已过期", wrapper.getSocketChannel());
-                    try {
-                        wrapper.close();
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                    it.remove();
-                }
-            }
-            log.info("检测结束...");
         }
     }
 }

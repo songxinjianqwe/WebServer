@@ -8,6 +8,6 @@ import com.sinjinsong.webserver.core.BootStrap;
  */
 public class Main {
     public static void main(String[] args) {
-        BootStrap.run();
+        BootStrap.run(args.length > 0 ? args[0] : null);
     }
 }
