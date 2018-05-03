@@ -7,14 +7,12 @@ import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
-import java.nio.channels.ClosedChannelException;
-import java.nio.channels.SelectionKey;
-import java.nio.channels.Selector;
-import java.nio.channels.SocketChannel;
+import java.nio.channels.*;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Queue;
-import java.util.concurrent.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 /**
  * @author sinjinsong
@@ -58,8 +56,8 @@ public class Poller implements Runnable {
         for (NioSocketWrapper wrapper : sockets.values()) {
             wrapper.close();
         }
-        selector.close();
         events.clear();
+        selector.close();
     }
 
     @Override
@@ -90,6 +88,8 @@ public class Poller implements Runnable {
                 }
             } catch (IOException e) {
                 e.printStackTrace();
+            } catch(ClosedSelectorException e){
+                log.info("{} 对应的selector 已关闭",this.pollerName);
             }
         }
     }

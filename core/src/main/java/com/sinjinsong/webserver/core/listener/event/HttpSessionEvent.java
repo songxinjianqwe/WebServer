@@ -2,7 +2,7 @@
 package com.sinjinsong.webserver.core.listener.event;
 
 
-import com.sinjinsong.webserver.core.model.HttpSession;
+import com.sinjinsong.webserver.core.session.HttpSession;
 
 public class HttpSessionEvent extends java.util.EventObject {
 

@@ -1,4 +1,4 @@
-package com.sinjinsong.webserver.core.model;
+package com.sinjinsong.webserver.core.cookie;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

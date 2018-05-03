@@ -5,8 +5,9 @@ import com.sinjinsong.webserver.core.constant.CharsetProperties;
 import com.sinjinsong.webserver.core.enumeration.RequestMethod;
 import com.sinjinsong.webserver.core.exception.RequestInvalidException;
 import com.sinjinsong.webserver.core.exception.RequestParseException;
-import com.sinjinsong.webserver.core.model.Cookie;
-import com.sinjinsong.webserver.core.model.HttpSession;
+import com.sinjinsong.webserver.core.cookie.Cookie;
+import com.sinjinsong.webserver.core.server.WebApplication;
+import com.sinjinsong.webserver.core.session.HttpSession;
 import com.sinjinsong.webserver.core.request.dispatcher.RequestDispatcher;
 import com.sinjinsong.webserver.core.request.dispatcher.impl.ApplicationRequestDispatcher;
 import com.sinjinsong.webserver.core.servlet.RequestHandler;
@@ -117,6 +118,8 @@ public class Request {
             e.printStackTrace();
             throw new RequestParseException();
         }
+        
+        WebApplication.getServletContext().afterRequestCreated(this);
     }
 
     public void setAttribute(String key, Object value) {

@@ -8,11 +8,15 @@ import com.sinjinsong.webserver.core.filter.Filter;
 import com.sinjinsong.webserver.core.listener.HttpSessionListener;
 import com.sinjinsong.webserver.core.listener.ServletContextListener;
 import com.sinjinsong.webserver.core.listener.ServletRequestListener;
+import com.sinjinsong.webserver.core.listener.event.HttpSessionEvent;
 import com.sinjinsong.webserver.core.listener.event.ServletContextEvent;
-import com.sinjinsong.webserver.core.model.Cookie;
-import com.sinjinsong.webserver.core.model.HttpSession;
+import com.sinjinsong.webserver.core.listener.event.ServletRequestEvent;
+import com.sinjinsong.webserver.core.cookie.Cookie;
+import com.sinjinsong.webserver.core.request.Request;
 import com.sinjinsong.webserver.core.response.Response;
 import com.sinjinsong.webserver.core.servlet.Servlet;
+import com.sinjinsong.webserver.core.session.HttpSession;
+import com.sinjinsong.webserver.core.session.IdleSessionCleaner;
 import com.sinjinsong.webserver.core.util.UUIDUtil;
 import com.sinjinsong.webserver.core.util.XMLUtil;
 import lombok.Data;
@@ -21,11 +25,14 @@ import org.dom4j.Document;
 import org.dom4j.Element;
 import org.springframework.util.AntPathMatcher;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
-import static com.sinjinsong.webserver.core.constant.ContextConstant.DEFAULE_SERVLET_ALIAS;
+import static com.sinjinsong.webserver.core.constant.ContextConstant.DEFAULT_SERVLET_ALIAS;
+import static com.sinjinsong.webserver.core.constant.ContextConstant.DEFAULT_SESSION_EXPIRE_TIME;
 
 /**
  * Created by SinjinSong on 2017/7/21.
@@ -46,20 +53,23 @@ public class ServletContext {
     private Map<String, FilterHolder> filters;
     //URL Pattern -> 别名
     private Map<String, List<String>> filterMapping;
-    
+
     private List<ServletContextListener> servletContextListeners;
     private List<HttpSessionListener> httpSessionListeners;
     private List<ServletRequestListener> servletRequestListeners;
-     
-    
+
+
     private Map<String, Object> attributes;
     private Map<String, HttpSession> sessions;
     private AntPathMatcher matcher;
-    
+
+    private IdleSessionCleaner idleSessionCleaner;
+
+
     public ServletContext() throws IllegalAccessException, ClassNotFoundException, InstantiationException {
         init();
     }
-    
+
     /**
      * 由URL得到对应的一个Servlet实例
      *
@@ -89,7 +99,7 @@ public class ServletContext {
             String bestMatch = matchingPatterns.get(0);
             return initAndGetServlet(bestMatch);
         }
-        return initAndGetServlet(DEFAULE_SERVLET_ALIAS);
+        return initAndGetServlet(DEFAULT_SERVLET_ALIAS);
     }
 
 
@@ -168,9 +178,15 @@ public class ServletContext {
         this.filters = new HashMap<>();
         this.filterMapping = new HashMap<>();
         this.matcher = new AntPathMatcher();
+        this.idleSessionCleaner = new IdleSessionCleaner();
+        this.idleSessionCleaner.start();
+        this.servletContextListeners = new ArrayList<>();
+        this.httpSessionListeners = new ArrayList<>();
+        this.servletRequestListeners = new ArrayList<>();
         parseConfig();
-        for(ServletContextListener listener : servletContextListeners) {
-            listener.contextInitialized(new ServletContextEvent(this));
+        ServletContextEvent servletContextEvent = new ServletContextEvent(this);
+        for (ServletContextListener listener : servletContextListeners) {
+            listener.contextInitialized(servletContextEvent);
         }
     }
 
@@ -185,6 +201,10 @@ public class ServletContext {
                 filterHolder.getFilter().destroy();
             }
         });
+        ServletContextEvent servletContextEvent = new ServletContextEvent(this);
+        for (ServletContextListener listener : servletContextListeners) {
+            listener.contextDestroyed(servletContextEvent);
+        }
     }
 
     /**
@@ -235,19 +255,19 @@ public class ServletContext {
                 values.add(value);
             }
         }
-        
+
         // 解析listener
         Element listener = root.element("listener");
         List<Element> listenerEles = listener.elements("listener-class");
-        for(Element listenerEle : listenerEles) {
+        for (Element listenerEle : listenerEles) {
             EventListener eventListener = (EventListener) Class.forName(listenerEle.getText()).newInstance();
-            if(eventListener instanceof ServletContextListener) {
+            if (eventListener instanceof ServletContextListener) {
                 servletContextListeners.add((ServletContextListener) eventListener);
             }
-            if(eventListener instanceof HttpSessionListener) {
+            if (eventListener instanceof HttpSessionListener) {
                 httpSessionListeners.add((HttpSessionListener) eventListener);
             }
-            if(eventListener instanceof ServletRequestListener) {
+            if (eventListener instanceof ServletRequestListener) {
                 servletRequestListeners.add((ServletRequestListener) eventListener);
             }
         }
@@ -262,7 +282,34 @@ public class ServletContext {
         HttpSession session = new HttpSession(UUIDUtil.uuid());
         sessions.put(session.getId(), session);
         response.addCookie(new Cookie("JSESSIONID", session.getId()));
+        HttpSessionEvent httpSessionEvent = new HttpSessionEvent(session);
+        for (HttpSessionListener listener : httpSessionListeners) {
+            listener.sessionCreated(httpSessionEvent);
+        }
         return session;
+    }
+
+    public void invalidateSession(HttpSession session) {
+        sessions.remove(session.getId());
+        afterSessionDestroyed(session);
+    }
+
+    public void cleanIdleSessions() {
+        for (Iterator<Map.Entry<String, HttpSession>> it = sessions.entrySet().iterator(); it.hasNext(); ) {
+            Map.Entry<String, HttpSession> entry = it.next();
+            if (Duration.between(entry.getValue().getLastAccessed(), Instant.now()).getSeconds() >= DEFAULT_SESSION_EXPIRE_TIME) {
+                log.info("该session {} 已过期", entry.getKey());
+                afterSessionDestroyed(entry.getValue());
+                it.remove();
+            }
+        }
+    }
+
+    private void afterSessionDestroyed(HttpSession session) {
+        HttpSessionEvent httpSessionEvent = new HttpSessionEvent(session);
+        for (HttpSessionListener listener : httpSessionListeners) {
+            listener.sessionDestroyed(httpSessionEvent);
+        }
     }
 
     public Object getAttribute(String key) {
@@ -273,4 +320,17 @@ public class ServletContext {
         attributes.put(key, value);
     }
 
+    public void afterRequestCreated(Request request) {
+        ServletRequestEvent servletRequestEvent = new ServletRequestEvent(this, request);
+        for (ServletRequestListener listener : servletRequestListeners) {
+            listener.requestInitialized(servletRequestEvent);
+        }
+    }
+
+    public void afterRequestDestroyed(Request request) {
+        ServletRequestEvent servletRequestEvent = new ServletRequestEvent(this, request);
+        for (ServletRequestListener listener : servletRequestListeners) {
+            listener.requestDestroyed(servletRequestEvent);
+        }
+    }
 }

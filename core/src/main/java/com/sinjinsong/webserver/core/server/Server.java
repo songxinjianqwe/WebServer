@@ -29,10 +29,10 @@ public class Server {
     private Acceptor acceptor;
     private List<Poller> pollers;
     private AtomicInteger pollerRotater = new AtomicInteger(0);
-    private int maxKeepAliveRequests = 100;
+//    private int maxKeepAliveRequests = 100;
     private int keepAliveTimeout = 5000;
     private IdleConnectionCleaner cleaner;
-
+    
     public Server() {
         this(DEFAULT_PORT);
     }
@@ -110,6 +110,7 @@ public class Server {
     }
 
     public void close() {
+        isRunning = false;
         cleaner.shutdown();
         for (Poller poller : pollers) {
             try {
@@ -118,8 +119,6 @@ public class Server {
                 e.printStackTrace();
             }
         }
-
-        isRunning = false;
         dispatcherServlet.shutdown();
     }
 

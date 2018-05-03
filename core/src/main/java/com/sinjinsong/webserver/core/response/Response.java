@@ -1,7 +1,7 @@
 package com.sinjinsong.webserver.core.response;
 
 import com.sinjinsong.webserver.core.enumeration.HTTPStatus;
-import com.sinjinsong.webserver.core.model.Cookie;
+import com.sinjinsong.webserver.core.cookie.Cookie;
 import com.sinjinsong.webserver.core.servlet.RequestHandler;
 import lombok.extern.slf4j.Slf4j;
 
