@@ -18,23 +18,23 @@ public class LoginFilter implements Filter {
     public void init() {
         log.info("LoginFilter init...");
     }
-    
+
     @Override
-    public void doFilter(Request request, Response response, FilterChain filterChain)  {
+    public void doFilter(Request request, Response response, FilterChain filterChain) {
         log.info("当前访问的servletPath:{}", request.getServletPath());
         // login直接放行，其他页面访问均需要登录
-        if (request.getServletPath().equals("/login") || request.getServletPath().contains("errors")) {
+        if (request.getServletPath().equals("/login") || request.getServletPath().startsWith("/views/errors")) {
             log.info("直接放行");
             filterChain.doFilter(request, response);
         } else {
             log.info("检查是否登录...");
-            if (request.getSession().getAttribute("username") != null) {
+            if (request.getSession(false) != null && request.getSession().getAttribute("username") != null) {
                 log.info("已登录，通过检查...");
                 filterChain.doFilter(request, response);
             } else {
                 log.info("未登录,401");
                 // 未登录。重定向至登录页面
-                response.sendRedirect( "/views/login.html");
+                response.sendRedirect("/login");
             }
         }
     }

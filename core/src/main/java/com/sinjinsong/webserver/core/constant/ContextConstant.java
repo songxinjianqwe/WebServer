@@ -6,4 +6,5 @@ package com.sinjinsong.webserver.core.constant;
 public class ContextConstant {
     public static final String ERROR_PAGE = "/errors/%s.html";
     public static final String DEFAULT_CONTENT_TYPE = "text/html;charset=utf-8";
+    public static final String DEFAULE_SERVLET_ALIAS = "DefaultServlet";
 }

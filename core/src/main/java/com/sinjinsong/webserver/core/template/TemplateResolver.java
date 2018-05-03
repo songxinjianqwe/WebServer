@@ -55,7 +55,9 @@ public class TemplateResolver {
                 matcher.appendReplacement(sb, value.toString());
             }
         }
+        matcher.appendTail(sb);
         String result = sb.toString();
+        log.info("模板渲染结果: {}",result);
         return result.length() == 0 ? content : result;
     }
 }

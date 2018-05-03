@@ -6,11 +6,11 @@ import com.sinjinsong.webserver.core.enumeration.RequestMethod;
 import com.sinjinsong.webserver.core.exception.RequestInvalidException;
 import com.sinjinsong.webserver.core.exception.RequestParseException;
 import com.sinjinsong.webserver.core.model.Cookie;
-import com.sinjinsong.webserver.core.model.HTTPSession;
+import com.sinjinsong.webserver.core.model.HttpSession;
 import com.sinjinsong.webserver.core.request.dispatcher.RequestDispatcher;
 import com.sinjinsong.webserver.core.request.dispatcher.impl.ApplicationRequestDispatcher;
-import com.sinjinsong.webserver.core.servlet.base.RequestHandler;
-import com.sinjinsong.webserver.core.servlet.context.ServletContext;
+import com.sinjinsong.webserver.core.servlet.RequestHandler;
+import com.sinjinsong.webserver.core.context.ServletContext;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -62,7 +62,7 @@ import java.util.Map;
 @Setter
 @Slf4j
 public class Request {
-    
+
     private RequestHandler requestHandler;
     private RequestMethod method;
     private String url;
@@ -71,8 +71,15 @@ public class Request {
     private Map<String, Object> attributes;
     private ServletContext servletContext;
     private Cookie[] cookies;
-    private HTTPSession session;
-    
+    private HttpSession session;
+
+    public String getParameter(String key) {
+        List<String> params = this.params.get(key);
+        if(params == null) {
+            return null;
+        }
+        return params.get(0);
+    }
     /**
      * 读取请求体只能使用字节流，使用字符流读不到
      *
@@ -138,25 +145,32 @@ public class Request {
      * 如果没有读到，那么会创建新的Session，并在响应头中加入Set-Cookie：“JSESSIONID=XXXXXXX”
      * 如果没有调用getSession，那么不会创建新的Session
      *
-     * @return HTTPSession
+     * @return HttpSession
      */
-    public HTTPSession getSession() {
+    public HttpSession getSession(boolean createIfNotExists) {
         if (session != null) {
             return session;
         }
         for (Cookie cookie : cookies) {
             if (cookie.getKey().equals("JSESSIONID")) {
-                HTTPSession currentSession = servletContext.getSession(cookie.getValue());
+                HttpSession currentSession = servletContext.getSession(cookie.getValue());
                 if (currentSession != null) {
                     session = currentSession;
                     return session;
                 }
             }
         }
+        if (!createIfNotExists) {
+            return null;
+        }
         session = servletContext.createSession(requestHandler.getResponse());
         return session;
     }
-    
+
+    public HttpSession getSession() {
+        return getSession(true);
+    }
+
     public String getServletPath() {
         return url;
     }
@@ -216,11 +230,11 @@ public class Request {
         log.info("解析请求体");
         byte[] bytes = body.getBytes(CharsetProperties.UTF_8_CHARSET);
         List<String> lengths = this.headers.get("Content-Length");
-        if(lengths != null){
+        if (lengths != null) {
             int length = Integer.parseInt(lengths.get(0));
-            log.info("length:{}",length);
-            parseParams(new String(bytes,0,length,CharsetProperties.UTF_8_CHARSET));
-        }else{
+            log.info("length:{}", length);
+            parseParams(new String(bytes, 0, length, CharsetProperties.UTF_8_CHARSET).trim());
+        } else {
             parseParams(body.trim());
         }
         if (this.params == null) {
@@ -237,7 +251,7 @@ public class Request {
             String[] kv = param.split("=");
             String key = kv[0];
             String[] values = kv[1].split(",");
-            
+
             this.params.put(key, Arrays.asList(values));
         }
     }

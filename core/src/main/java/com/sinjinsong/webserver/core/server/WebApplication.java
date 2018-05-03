@@ -1,6 +1,6 @@
 package com.sinjinsong.webserver.core.server;
 
-import com.sinjinsong.webserver.core.servlet.context.ServletContext;
+import com.sinjinsong.webserver.core.context.ServletContext;
 
 /**
  * Created by SinjinSong on 2017/7/21.
@@ -11,11 +11,11 @@ public class WebApplication {
     static {
         try {
             servletContext = new ServletContext();
+        } catch (IllegalAccessException e) {
+            e.printStackTrace();
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
         } catch (InstantiationException e) {
-            e.printStackTrace();
-        } catch (IllegalAccessException e) {
             e.printStackTrace();
         }
     }

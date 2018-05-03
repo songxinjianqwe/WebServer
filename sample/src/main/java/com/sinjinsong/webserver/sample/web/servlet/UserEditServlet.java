@@ -11,19 +11,36 @@ import lombok.extern.slf4j.Slf4j;
 import java.io.IOException;
 
 /**
- * Created by SinjinSong on 2017/7/21.
+ * @author sinjinsong
+ * @date 2018/5/3
  */
 @Slf4j
-public class UserServlet extends HttpServlet {
+public class UserEditServlet extends HttpServlet {
     private UserService userService;
 
-    public UserServlet() {
+    public UserEditServlet() {
         userService = UserService.getInstance();
     }
+
     
     @Override
     public void doGet(Request request, Response response) throws ServletException, IOException {
         User user = userService.findByUsername((String) request.getSession().getAttribute("username"));
+        request.setAttribute("username",user.getUsername());
+        request.setAttribute("realName",user.getRealName());
+        request.setAttribute("age",user.getAge());
+        request.getRequestDispatcher("/views/userEdit.html").forward(request,response);
+    }
+
+    @Override
+    public void doPost(Request request, Response response) throws ServletException, IOException {
+        log.info("{}",request.getParams());
+        User user = new User();
+        user.setUsername((String) request.getSession(false).getAttribute("username"));
+        user.setRealName(request.getParameter("realName"));
+        user.setAge(Integer.valueOf(request.getParameter("age")));
+        userService.update(user);
+        
         request.setAttribute("username", user.getUsername());
         request.setAttribute("realName", user.getRealName());
         request.setAttribute("age", user.getAge());

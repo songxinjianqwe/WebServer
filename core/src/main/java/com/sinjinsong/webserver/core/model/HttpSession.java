@@ -6,11 +6,11 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * Created by SinjinSong on 2017/7/21.
  */
-public class HTTPSession {
+public class HttpSession {
     private String id;
     private Map<String, Object> attributes;
     
-    public HTTPSession(String id){
+    public HttpSession(String id){
         this.id = id;
         attributes = new ConcurrentHashMap<>();
     }

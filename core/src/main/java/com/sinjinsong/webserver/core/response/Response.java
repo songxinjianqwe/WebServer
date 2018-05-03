@@ -2,6 +2,7 @@ package com.sinjinsong.webserver.core.response;
 
 import com.sinjinsong.webserver.core.enumeration.HTTPStatus;
 import com.sinjinsong.webserver.core.model.Cookie;
+import com.sinjinsong.webserver.core.servlet.RequestHandler;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
@@ -41,8 +42,8 @@ public class Response {
     private String contentType = DEFAULT_CONTENT_TYPE;
     private byte[] body = new byte[0];
     private SocketChannel socketChannel;
-
-
+    private RequestHandler requestHandler;
+    
     public Response(SocketChannel socketChannel) {
         this.socketChannel = socketChannel;
         this.headerAppender = new StringBuilder();
@@ -111,11 +112,16 @@ public class Response {
         }
     }
     
+    public void setRequestHandler(RequestHandler requestHandler) {
+        this.requestHandler = requestHandler;
+    }
+
     public void sendRedirect(String url) {
         log.info("重定向至{}", url);
         addHeader(new Header("Location", url));
         setStatus(HTTPStatus.MOVED_TEMPORARILY);
         buildHeader();
         buildBody();
+        requestHandler.finishRequest();
     }
 }

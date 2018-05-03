@@ -4,7 +4,7 @@ import com.sinjinsong.webserver.core.exception.base.ServletException;
 import com.sinjinsong.webserver.core.request.Request;
 import com.sinjinsong.webserver.core.response.Response;
 import com.sinjinsong.webserver.sample.service.UserService;
-import com.sinjinsong.webserver.core.servlet.base.HTTPServlet;
+import com.sinjinsong.webserver.core.servlet.impl.HttpServlet;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
@@ -15,12 +15,12 @@ import java.util.Map;
  * Created by SinjinSong on 2017/7/21.
  */
 @Slf4j
-public class LoginServlet extends HTTPServlet {
+public class LoginServlet extends HttpServlet {
     
     private UserService userService;
 
     public LoginServlet() {
-        userService = new UserService();
+        userService = UserService.getInstance();
     }
 
     @Override

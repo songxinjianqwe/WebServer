@@ -1,4 +1,4 @@
-package com.sinjinsong.webserver.core.servlet.base;
+package com.sinjinsong.webserver.core.servlet;
 
 import com.sinjinsong.webserver.core.server.WebApplication;
 import com.sinjinsong.webserver.core.exception.base.ServletException;
@@ -6,7 +6,7 @@ import com.sinjinsong.webserver.core.exception.handler.ExceptionHandler;
 import com.sinjinsong.webserver.core.request.Request;
 import com.sinjinsong.webserver.core.resource.ResourceHandler;
 import com.sinjinsong.webserver.core.response.Response;
-import com.sinjinsong.webserver.core.servlet.context.ServletContext;
+import com.sinjinsong.webserver.core.context.ServletContext;
 import com.sinjinsong.webserver.core.wrapper.NioSocketWrapper;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
@@ -44,6 +44,7 @@ public class DispatcherServlet {
 
     public void shutdown() {
         pool.shutdown();
+        servletContext.destroy();
     }
 
     /**
@@ -61,7 +62,7 @@ public class DispatcherServlet {
             response = new Response(socketWrapper.getSocketChannel());
             request.setServletContext(servletContext);
             log.info("已经将请求放入worker线程池中");
-            pool.execute(new RequestHandler(socketWrapper, request, response, servletContext.map(request.getUrl()), exceptionHandler, resourceHandler));
+            pool.execute(new RequestHandler(socketWrapper, request, response, servletContext.mapServlet(request.getUrl()),servletContext.mapFilter(request.getUrl()), exceptionHandler, resourceHandler));
         } catch (ServletException e) {
             exceptionHandler.handle(e, response, socketWrapper);
         } catch (IOException e) {

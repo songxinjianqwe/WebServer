@@ -1,9 +1,10 @@
-package com.sinjinsong.webserver.core.servlet.base;
+package com.sinjinsong.webserver.core.servlet.impl;
 
 import com.sinjinsong.webserver.core.enumeration.RequestMethod;
 import com.sinjinsong.webserver.core.exception.base.ServletException;
 import com.sinjinsong.webserver.core.request.Request;
 import com.sinjinsong.webserver.core.response.Response;
+import com.sinjinsong.webserver.core.servlet.Servlet;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
@@ -12,9 +13,18 @@ import java.io.IOException;
  * Created by SinjinSong on 2017/7/21.
  */
 @Slf4j
-public abstract class HTTPServlet implements Servlet {
+public abstract class HttpServlet implements Servlet {
 
-    
+    @Override
+    public void init() {
+        
+    }
+
+    @Override
+    public void destroy() {
+
+    }
+
     public void service(Request request, Response response) throws ServletException, IOException {
         if (request.getMethod() == RequestMethod.GET) {
             doGet(request, response);

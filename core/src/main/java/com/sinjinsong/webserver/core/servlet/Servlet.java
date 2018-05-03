@@ -1,4 +1,4 @@
-package com.sinjinsong.webserver.core.servlet.base;
+package com.sinjinsong.webserver.core.servlet;
 
 import com.sinjinsong.webserver.core.exception.base.ServletException;
 import com.sinjinsong.webserver.core.request.Request;

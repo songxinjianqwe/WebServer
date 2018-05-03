@@ -3,7 +3,7 @@ package com.sinjinsong.webserver.core.server;
 import com.sinjinsong.webserver.core.connector.Acceptor;
 import com.sinjinsong.webserver.core.connector.IdleConnectionCleaner;
 import com.sinjinsong.webserver.core.connector.Poller;
-import com.sinjinsong.webserver.core.servlet.base.DispatcherServlet;
+import com.sinjinsong.webserver.core.servlet.DispatcherServlet;
 import com.sinjinsong.webserver.core.wrapper.NioSocketWrapper;
 import lombok.extern.slf4j.Slf4j;
 
@@ -39,11 +39,11 @@ public class Server {
 
     public Server(int port) {
         try {
+            initDispatcherServlet();
             initServerSocket(port);
             initPoller();
             initAcceptor();
             initIdleSocketCleaner();
-            dispatcherServlet = new DispatcherServlet();
             log.info("服务器启动");
         } catch (Exception e) {
             e.printStackTrace();
@@ -52,8 +52,12 @@ public class Server {
 
         }
     }
-    
-    
+
+    private void initDispatcherServlet() {
+        dispatcherServlet = new DispatcherServlet();
+    }
+
+
     public void execute(NioSocketWrapper socketWrapper) {
         dispatcherServlet.doDispatch(socketWrapper);
     }
@@ -101,7 +105,7 @@ public class Server {
      * 初始化IdleSocketCleaner
      */
     private void initIdleSocketCleaner() {
-        cleaner = new IdleConnectionCleaner(pollers,keepAliveTimeout);
+        cleaner = new IdleConnectionCleaner(pollers, keepAliveTimeout);
         cleaner.start();
     }
 
@@ -114,7 +118,7 @@ public class Server {
                 e.printStackTrace();
             }
         }
-        
+
         isRunning = false;
         dispatcherServlet.shutdown();
     }

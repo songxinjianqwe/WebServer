@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>User</title>
+    <meta HTTP-EQUIV="pragma" CONTENT="no-cache">
+    <meta HTTP-EQUIV="Cache-Control" CONTENT="no-store">
+    <meta HTTP-EQUIV="expires" CONTENT="0">
+</head>
+<body>
+    <p>修改用户信息</p>
+    <form method="post" action="http://localhost:8080/user/edit">
+        真实姓名: <input type="text" name="realName" value="${requestScope.realName}" />
+        年龄: <input type="age" name="age" value="${requestScope.age}" />
+        <input type="submit" value="修改"/>
+    </form>
+</body>
+</html>

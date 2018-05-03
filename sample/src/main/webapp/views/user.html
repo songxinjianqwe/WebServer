@@ -2,9 +2,26 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>UserInfo</title>
+    <title>User</title>
+    <meta HTTP-EQUIV="pragma" CONTENT="no-cache">
+    <meta HTTP-EQUIV="Cache-Control" CONTENT="no-store">
+    <meta HTTP-EQUIV="expires" CONTENT="0">
 </head>
 <body>
-    您的用户名是:${sessionScope.username}
+    您好,${sessionScope.username} <br>
+    <table>
+        <tr>
+            <td>用户名</td>
+            <td>真实姓名</td>
+            <td>年龄</td>
+        </tr>
+        <tr>
+            <td>${requestScope.username}</td>
+            <td>${requestScope.realName}</td>
+            <td>${requestScope.age}</td>
+        </tr>
+    </table>
+    <br>
+    <a href="http://localhost:8080/user/edit">修改用户信息</a>
 </body>
 </html>
