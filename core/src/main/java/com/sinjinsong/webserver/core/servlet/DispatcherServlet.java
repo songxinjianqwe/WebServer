@@ -1,21 +1,18 @@
 package com.sinjinsong.webserver.core.servlet;
 
-import com.sinjinsong.webserver.core.context.WebApplication;
+import com.sinjinsong.webserver.core.context.ServletContext;
 import com.sinjinsong.webserver.core.exception.base.ServletException;
 import com.sinjinsong.webserver.core.exception.handler.ExceptionHandler;
 import com.sinjinsong.webserver.core.request.Request;
 import com.sinjinsong.webserver.core.resource.ResourceHandler;
 import com.sinjinsong.webserver.core.response.Response;
-import com.sinjinsong.webserver.core.context.ServletContext;
-import com.sinjinsong.webserver.core.wrapper.NioSocketWrapper;
+import com.sinjinsong.webserver.core.wrapper.AioSocketWrapper;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
+import java.nio.ByteBuffer;
+import java.nio.channels.CompletionHandler;
 
 /**
  * Created by SinjinSong on 2017/7/21.
@@ -25,48 +22,49 @@ import java.util.concurrent.TimeUnit;
 public class DispatcherServlet {
     private ResourceHandler resourceHandler;
     private ExceptionHandler exceptionHandler;
-    private ThreadPoolExecutor pool;
     private ServletContext servletContext;
 
-    public DispatcherServlet()  {
-        this.servletContext = WebApplication.getServletContext();
+    public DispatcherServlet() {
+        this.servletContext = com.sinjinsong.webserver.core.server.WebApplication.getServletContext();
         this.exceptionHandler = new ExceptionHandler();
         this.resourceHandler = new ResourceHandler(exceptionHandler);
-        ThreadFactory threadFactory = new ThreadFactory() {
-            private int count;
-            @Override
-            public Thread newThread(Runnable r) {
-                return new Thread(r, "Worker Pool-" + count++);
-            }
-        };
-        this.pool = new ThreadPoolExecutor(100, 100, 1, TimeUnit.SECONDS, new ArrayBlockingQueue<>(200), threadFactory,new ThreadPoolExecutor.CallerRunsPolicy());
     }
 
     public void shutdown() {
-        pool.shutdown();
         servletContext.destroy();
     }
 
     /**
      * 所有请求都经过DispatcherServlet的转发
-     *
+     * 读取
      * @throws IOException
      * @throws ServletException
      */
-    public void doDispatch(NioSocketWrapper socketWrapper) {
-        Request request = null;
-        Response response = null;
-        try {
-            //解析请求
-            request = new Request(socketWrapper.getSocketChannel());
-            response = new Response(socketWrapper.getSocketChannel());
-            request.setServletContext(servletContext);
-            log.info("已经将请求放入worker线程池中");
-            pool.execute(new RequestHandler(socketWrapper, request, response, servletContext.mapServlet(request.getUrl()),servletContext.mapFilter(request.getUrl()), exceptionHandler, resourceHandler));
-        } catch (ServletException e) {
-            exceptionHandler.handle(e, response, socketWrapper);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+    public void doDispatch(AioSocketWrapper socketWrapper) {
+        ByteBuffer buffer = ByteBuffer.allocate(1024);
+        socketWrapper.getSocketChannel().read(buffer, buffer, new CompletionHandler<Integer, ByteBuffer>() {
+            @Override
+            public void completed(Integer result, ByteBuffer attachment) {
+                Request request = null;
+                Response response = null;
+                try {
+                    //解析请求
+                    request = new Request(attachment.array());
+                    response = new Response(socketWrapper.getSocketChannel());
+                    request.setServletContext(servletContext);
+                    new RequestHandler(socketWrapper, request, response, servletContext.mapServlet(request.getUrl()), servletContext.mapFilter(request.getUrl()), exceptionHandler, resourceHandler,this).run();
+                } catch (ServletException e) {
+                    exceptionHandler.handle(e, response, socketWrapper);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+            
+            @Override
+            public void failed(Throwable e, ByteBuffer attachment) {
+                log.error("read failed");
+                e.printStackTrace();
+            }
+        });
     }
 }

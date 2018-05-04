@@ -10,7 +10,7 @@ import com.sinjinsong.webserver.core.response.Response;
 import com.sinjinsong.webserver.core.template.TemplateResolver;
 import com.sinjinsong.webserver.core.util.IOUtil;
 import com.sinjinsong.webserver.core.util.MimeTypeUtil;
-import com.sinjinsong.webserver.core.wrapper.NioSocketWrapper;
+import com.sinjinsong.webserver.core.wrapper.AioSocketWrapper;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
@@ -26,7 +26,7 @@ public class ResourceHandler {
         this.exceptionHandler = exceptionHandler;
     }
 
-    public void handle(Request request, Response response, NioSocketWrapper socketWrapper) {
+    public void handle(Request request, Response response, AioSocketWrapper socketWrapper) {
         String url = request.getUrl();
         try {
             if (ResourceHandler.class.getResource(url) == null) {

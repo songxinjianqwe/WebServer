@@ -1,39 +1,33 @@
 package com.sinjinsong.webserver.core.connector;
 
+import com.sinjinsong.webserver.core.wrapper.AioSocketWrapper;
 import lombok.extern.slf4j.Slf4j;
 
-import java.io.IOException;
-import java.nio.channels.SocketChannel;
+import java.nio.channels.AsynchronousSocketChannel;
+import java.nio.channels.CompletionHandler;
 
 /**
  * @author sinjinsong
- * @date 2018/3/6
+ * @date 2018/5/4
  */
 @Slf4j
-public class Acceptor implements Runnable {
+public class Acceptor implements CompletionHandler<AsynchronousSocketChannel, Void> {
     private Server server;
-    
+
     public Acceptor(Server server) {
         this.server = server;
     }
-    
+
+
     @Override
-    public void run() {
-        log.info("{} 开始监听",Thread.currentThread().getName());
-        while (server.isRunning()) {
-            SocketChannel client;
-            try {
-                client = server.serverSocketAccept();
-                if(client == null){
-                    continue;
-                }
-                client.configureBlocking(false);
-                log.info("Acceptor接收到连接请求 {}",client);
-                server.setSocketOptions(client); 
-                log.info("socketWrapper:{}", client);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
+    public void completed(AsynchronousSocketChannel result, Void attachment) {
+        server.accept();
+        server.execute(new AioSocketWrapper(server, result));
+    }
+
+    @Override
+    public void failed(Throwable e, Void attachment) {
+        log.info("accept failed...");
+        e.printStackTrace();
     }
 }

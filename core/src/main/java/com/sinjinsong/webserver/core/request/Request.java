@@ -2,26 +2,22 @@ package com.sinjinsong.webserver.core.request;
 
 import com.sinjinsong.webserver.core.constant.CharConstant;
 import com.sinjinsong.webserver.core.constant.CharsetProperties;
+import com.sinjinsong.webserver.core.context.ServletContext;
+import com.sinjinsong.webserver.core.cookie.Cookie;
 import com.sinjinsong.webserver.core.enumeration.RequestMethod;
 import com.sinjinsong.webserver.core.exception.RequestInvalidException;
 import com.sinjinsong.webserver.core.exception.RequestParseException;
-import com.sinjinsong.webserver.core.cookie.Cookie;
-import com.sinjinsong.webserver.core.context.WebApplication;
-import com.sinjinsong.webserver.core.session.HttpSession;
 import com.sinjinsong.webserver.core.request.dispatcher.RequestDispatcher;
 import com.sinjinsong.webserver.core.request.dispatcher.impl.ApplicationRequestDispatcher;
 import com.sinjinsong.webserver.core.servlet.RequestHandler;
-import com.sinjinsong.webserver.core.context.ServletContext;
+import com.sinjinsong.webserver.core.session.HttpSession;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
-import java.nio.ByteBuffer;
-import java.nio.channels.SocketChannel;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -84,23 +80,16 @@ public class Request {
     /**
      * 读取请求体只能使用字节流，使用字符流读不到
      *
-     * @param socketChannel
+     * @param data
      * @throws RequestParseException
      */
-    public Request(SocketChannel socketChannel) throws RequestParseException, RequestInvalidException, IOException {
+    public Request(byte[] data) throws RequestParseException, RequestInvalidException, IOException {
         this.attributes = new HashMap<>();
-        ByteBuffer buffer = ByteBuffer.allocate(1024);
-        log.info("开始读取Request");
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        while (socketChannel.read(buffer) > 0) {
-            buffer.flip();
-            baos.write(buffer.array());
-        }
-        baos.close();
+         log.info("开始读取Request");
         String[] lines = null;
         try {
             //支持中文，对中文进行URL解码
-            lines = URLDecoder.decode(new String(baos.toByteArray(), CharsetProperties.UTF_8_CHARSET), CharsetProperties.UTF_8).split(CharConstant.CRLF);
+            lines = URLDecoder.decode(new String(data, CharsetProperties.UTF_8_CHARSET), CharsetProperties.UTF_8).split(CharConstant.CRLF);
         } catch (UnsupportedEncodingException e) {
             e.printStackTrace();
         }
@@ -119,7 +108,7 @@ public class Request {
             throw new RequestParseException();
         }
         
-        WebApplication.getServletContext().afterRequestCreated(this);
+        com.sinjinsong.webserver.core.server.WebApplication.getServletContext().afterRequestCreated(this);
     }
 
     public void setAttribute(String key, Object value) {

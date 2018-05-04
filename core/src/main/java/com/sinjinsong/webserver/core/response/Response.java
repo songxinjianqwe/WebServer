@@ -1,16 +1,17 @@
 package com.sinjinsong.webserver.core.response;
 
-import com.sinjinsong.webserver.core.enumeration.HTTPStatus;
 import com.sinjinsong.webserver.core.cookie.Cookie;
+import com.sinjinsong.webserver.core.enumeration.HTTPStatus;
 import com.sinjinsong.webserver.core.servlet.RequestHandler;
 import lombok.extern.slf4j.Slf4j;
 
-import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.nio.channels.SocketChannel;
+import java.nio.channels.AsynchronousSocketChannel;
+import java.nio.channels.CompletionHandler;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import static com.sinjinsong.webserver.core.constant.CharConstant.BLANK;
 import static com.sinjinsong.webserver.core.constant.CharConstant.CRLF;
@@ -41,10 +42,10 @@ public class Response {
     private HTTPStatus status = HTTPStatus.OK;
     private String contentType = DEFAULT_CONTENT_TYPE;
     private byte[] body = new byte[0];
-    private SocketChannel socketChannel;
+    private AsynchronousSocketChannel socketChannel;
     private RequestHandler requestHandler;
     
-    public Response(SocketChannel socketChannel) {
+    public Response(AsynchronousSocketChannel socketChannel) {
         this.socketChannel = socketChannel;
         this.headerAppender = new StringBuilder();
         this.cookies = new ArrayList<>();
@@ -99,17 +100,27 @@ public class Response {
         return this;
     }
 
-    public void writeToClient() {
+    public void writeToClient(CompletionHandler readHandler) {
         //默认返回OK
         buildHeader();
         buildBody();
         byte[] header = this.headerAppender.toString().getBytes(UTF_8_CHARSET);
         ByteBuffer[] response = {ByteBuffer.wrap(header), ByteBuffer.wrap(body)};
-        try {
-            socketChannel.write(response);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        socketChannel.write(response, 0, 2, 0L, TimeUnit.MILLISECONDS, null, new CompletionHandler<Long, Object>() {
+
+            @Override
+            public void completed(Long result, Object attachment) {
+                log.info("写入完毕...");
+                ByteBuffer byteBuffer = ByteBuffer.allocate(1024);
+                socketChannel.read(byteBuffer,byteBuffer,readHandler);
+            }
+
+            @Override
+            public void failed(Throwable e, Object attachment) {
+                log.info("写入失败...");
+                e.printStackTrace();
+            }
+        });
     }
     
     public void setRequestHandler(RequestHandler requestHandler) {

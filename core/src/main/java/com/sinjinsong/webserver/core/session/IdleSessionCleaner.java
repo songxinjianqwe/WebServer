@@ -1,6 +1,5 @@
 package com.sinjinsong.webserver.core.session;
 
-import com.sinjinsong.webserver.core.context.WebApplication;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.concurrent.Executors;
@@ -34,7 +33,7 @@ public class IdleSessionCleaner implements Runnable {
     @Override
     public void run() {
         log.info("开始扫描过期session...");
-        WebApplication.getServletContext().cleanIdleSessions();
+        com.sinjinsong.webserver.core.server.WebApplication.getServletContext().cleanIdleSessions();
         log.info("扫描结束...");
     }
 }

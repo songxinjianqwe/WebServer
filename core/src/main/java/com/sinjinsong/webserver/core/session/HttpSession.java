@@ -1,6 +1,5 @@
 package com.sinjinsong.webserver.core.session;
 
-import com.sinjinsong.webserver.core.context.WebApplication;
 
 import java.time.Instant;
 import java.util.Map;
@@ -26,7 +25,7 @@ public class HttpSession {
     public void invalidate() {
         this.isValid = false;
         this.attributes.clear();
-        WebApplication.getServletContext().invalidateSession(this);
+        com.sinjinsong.webserver.core.server.WebApplication.getServletContext().invalidateSession(this);
     }
 
     public Object getAttribute(String key) {

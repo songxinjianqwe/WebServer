@@ -1,16 +1,14 @@
 package com.sinjinsong.webserver.core.connector;
 
 import com.sinjinsong.webserver.core.servlet.DispatcherServlet;
-import com.sinjinsong.webserver.core.wrapper.NioSocketWrapper;
+import com.sinjinsong.webserver.core.wrapper.AioSocketWrapper;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.nio.channels.ServerSocketChannel;
-import java.nio.channels.SocketChannel;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.nio.channels.AsynchronousChannelGroup;
+import java.nio.channels.AsynchronousServerSocketChannel;
+import java.util.concurrent.*;
 
 /**
  * Created by SinjinSong on 2017/7/20.
@@ -19,16 +17,11 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class Server {
 
     private static final int DEFAULT_PORT = 8080;
-    private int pollerCount = Math.min(2, Runtime.getRuntime().availableProcessors());
-    private ServerSocketChannel server;
+    private AsynchronousServerSocketChannel server;
     private DispatcherServlet dispatcherServlet;
-    private volatile boolean isRunning = true;
     private Acceptor acceptor;
-    private List<Poller> pollers;
-    private AtomicInteger pollerRotater = new AtomicInteger(0);
-//    private int maxKeepAliveRequests = 100;
     private int keepAliveTimeout = 5000;
-    private IdleConnectionCleaner cleaner;
+    private ExecutorService pool;
     
     public Server() {
         this(DEFAULT_PORT);
@@ -38,15 +31,11 @@ public class Server {
         try {
             initDispatcherServlet();
             initServerSocket(port);
-            initPoller();
-            initAcceptor();
-            initIdleSocketCleaner();
             log.info("服务器启动");
         } catch (Exception e) {
             e.printStackTrace();
             log.info("初始化服务器失败");
             close();
-
         }
     }
 
@@ -55,90 +44,45 @@ public class Server {
     }
 
 
-    public void execute(NioSocketWrapper socketWrapper) {
+    public void execute(AioSocketWrapper socketWrapper) {
         dispatcherServlet.doDispatch(socketWrapper);
     }
 
     private void initServerSocket(int port) throws IOException {
-        server = ServerSocketChannel.open();
-        server.bind(new InetSocketAddress(port));
-        server.configureBlocking(true);
+        ThreadFactory threadFactory = new ThreadFactory() {
+            private int count;
+            @Override
+            public Thread newThread(Runnable r) {
+                return new Thread(r, "Worker Pool-" + count++);
+            }
+        };
+        pool = new ThreadPoolExecutor(100, 100, 1, TimeUnit.SECONDS, new ArrayBlockingQueue<>(200), threadFactory,new ThreadPoolExecutor.CallerRunsPolicy());
+        // 以指定线程池来创建一个AsynchronousChannelGroup  
+        AsynchronousChannelGroup channelGroup = AsynchronousChannelGroup
+                .withThreadPool(pool);
+        // 以指定线程池来创建一个AsynchronousServerSocketChannel  
+        server = AsynchronousServerSocketChannel.open(channelGroup)
+                // 指定监听本机的PORT端口  
+                .bind(new InetSocketAddress(port));
+        // 使用CompletionHandler接受来自客户端的连接请求  
+        acceptor = new Acceptor(this);
+        server.accept(null, acceptor);    
     }
 
-    private void initPoller() throws IOException {
-        pollers = new ArrayList<>(pollerCount);
-        for (int i = 0; i < pollerCount; i++) {
-            String pollName = "Poller-" + i;
-            Poller poller = new Poller(this, pollName);
-            Thread pollerThread = new Thread(poller, pollName);
-            pollerThread.setDaemon(true);
-            pollerThread.start();
-            pollers.add(poller);
-        }
-    }
-
-    /**
-     * 轮询Poller，实现负载均衡
-     *
-     * @return
-     */
-    private Poller getPoller() {
-        int idx = Math.abs(pollerRotater.incrementAndGet()) % pollers.size();
-        return pollers.get(idx);
-    }
-
-
-    /**
-     * 初始化Acceptor
-     */
-    private void initAcceptor() {
-        this.acceptor = new Acceptor(this);
-        Thread t = new Thread(acceptor, "Acceptor");
-        t.setDaemon(true);
-        t.start();
-    }
-
-    /**
-     * 初始化IdleSocketCleaner
-     */
-    private void initIdleSocketCleaner() {
-        cleaner = new IdleConnectionCleaner(pollers, keepAliveTimeout);
-        cleaner.start();
+    public void accept() {
+        server.accept(null,acceptor);
     }
 
     public void close() {
-        isRunning = false;
-        cleaner.shutdown();
-        for (Poller poller : pollers) {
-            try {
-                poller.close();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
+        
         dispatcherServlet.shutdown();
+        try {
+            server.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
-
-    public boolean isRunning() {
-        return isRunning;
-    }
-
-    public SocketChannel serverSocketAccept() throws IOException {
-        return server.accept();
-    }
-
-    /**
-     * 将Acceptor接收到的socket放到随机一个Poller的Queue中
-     *
-     * @param socket
-     * @return
-     */
-    public void setSocketOptions(SocketChannel socket) throws IOException {
-        server.configureBlocking(false);
-        getPoller().register(socket, true);
-        server.configureBlocking(true);
-    }
 
     public int getKeepAliveTimeout() {
         return this.keepAliveTimeout;

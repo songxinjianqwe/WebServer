@@ -8,14 +8,13 @@ import com.sinjinsong.webserver.core.filter.FilterChain;
 import com.sinjinsong.webserver.core.request.Request;
 import com.sinjinsong.webserver.core.resource.ResourceHandler;
 import com.sinjinsong.webserver.core.response.Response;
-import com.sinjinsong.webserver.core.context.WebApplication;
-import com.sinjinsong.webserver.core.wrapper.NioSocketWrapper;
+import com.sinjinsong.webserver.core.wrapper.AioSocketWrapper;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 
-import java.io.IOException;
+import java.nio.channels.CompletionHandler;
 import java.util.List;
 
 /**
@@ -27,7 +26,7 @@ import java.util.List;
 @Slf4j
 @AllArgsConstructor
 public class RequestHandler implements Runnable, FilterChain {
-    private NioSocketWrapper socketWrapper;
+    private AioSocketWrapper socketWrapper;
     private Request request;
     private Response response;
     private Servlet servlet;
@@ -36,8 +35,9 @@ public class RequestHandler implements Runnable, FilterChain {
     private ResourceHandler resourceHandler;
     private int filterIndex = 0;
     private boolean isFinished;
+    private CompletionHandler readHandler;
     
-    public RequestHandler(NioSocketWrapper socketWrapper, Request request, Response response, Servlet servlet, List<Filter> filters, ExceptionHandler exceptionHandler, ResourceHandler resourceHandler) {
+    public RequestHandler(AioSocketWrapper socketWrapper, Request request, Response response, Servlet servlet, List<Filter> filters, ExceptionHandler exceptionHandler, ResourceHandler resourceHandler,CompletionHandler readHandler) {
         this.socketWrapper = socketWrapper;
         this.request = request;
         this.response = response;
@@ -46,6 +46,7 @@ public class RequestHandler implements Runnable, FilterChain {
         this.exceptionHandler = exceptionHandler;
         this.resourceHandler = resourceHandler;
         this.isFinished = false;
+        this.readHandler = readHandler;
     }
 
     /**
@@ -53,6 +54,7 @@ public class RequestHandler implements Runnable, FilterChain {
      */
     @Override
     public void run() {
+        log.info("RequestHandler running...");
         //为了让request能找得到response，以设置cookie
         request.setRequestHandler(this);
         response.setRequestHandler(this);
@@ -61,6 +63,7 @@ public class RequestHandler implements Runnable, FilterChain {
         } else {
             doFilter(request, response);
         }
+        log.info("RequestHandler finished...");
     }
 
     @Override
@@ -95,20 +98,7 @@ public class RequestHandler implements Runnable, FilterChain {
     
     public void finishRequest() {
         isFinished = true;
-        response.writeToClient();
-        List<String> connection = request.getHeaders().get("Connection");
-        try {
-            if (connection != null && connection.get(0).equals("close")) {
-                log.info("CLOSE: 客户端连接{} 已关闭", socketWrapper.getSocketChannel());
-                socketWrapper.close();
-            } else {
-                // keep-alive 重新注册到Poller中
-                log.info("KEEP-ALIVE: 客户端连接{} 重新注册到Poller中", socketWrapper.getSocketChannel());
-                socketWrapper.getPoller().register(socketWrapper.getSocketChannel(), false);
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        WebApplication.getServletContext().afterRequestDestroyed(request);   
+        response.writeToClient(readHandler);
+        com.sinjinsong.webserver.core.server.WebApplication.getServletContext().afterRequestDestroyed(request);   
     }
 }
