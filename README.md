@@ -16,11 +16,11 @@
 - Simple TemplateEngine
 - session
 - cookie
-
+- filter
+-listener 
 ## 使用技术
 
 基于Java BIO、多线程、Socket网络编程、XML解析、log4j/slf4j日志
-只引入了junit,lombok(简化POJO开发),slf4j,log4j,dom4j(解析xml),mime-util(用于判断文件类型)依赖，与web相关内容全部自己完成。
 
 ## 打包
 - 必须使用maven的assembly插件，它可以把依赖的jar包打进来并且解压
@@ -51,16 +51,16 @@
 200个线程，每个线程循环访问100次，吞吐量为737个请求/sec,平均响应时间为165ms
 1000个线程，每个线程循环访问20次，吞吐量为570个请求/sec,平均响应时间为1195ms
 
+![image](http://markdown-1252651195.cossh.myqcloud.com/%E6%9C%AA%E5%91%BD%E5%90%8D%E6%96%87%E4%BB%B6.jpg)
 
 ## 未来希望添加的功能：
 - 手写WebSocket服务器，实现HTTP长连接
-- Filter
-- Listener
-- 实现Servlet3.1标准
 - 实现AsyncServlet
 - 实现多应用隔离，自定义类加载器体系
 
 ## 另附CSDN相关博客
 http://blog.csdn.net/songxinjianqwe/article/details/75670552
 
-![image](http://markdown-1252651195.cossh.myqcloud.com/%E6%9C%AA%E5%91%BD%E5%90%8D%E6%96%87%E4%BB%B6.jpg)
+
+## AIO
+实现一个AIO版本
