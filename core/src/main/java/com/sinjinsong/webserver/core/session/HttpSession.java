@@ -40,11 +40,6 @@ public class HttpSession {
     public void setAttribute(String key, Object value) {
         if (isValid) {
             this.lastAccessed = Instant.now();
-            if (attributes.containsKey(key)) {
-                WebApplication.getServletContext().afterAttributeReplaced(this, key, value);
-            } else {
-                WebApplication.getServletContext().afterAttributeAdded(this, key, value);
-            }
             attributes.put(key, value);
         } else {
             throw new IllegalStateException("session has invalidated");
@@ -60,4 +55,9 @@ public class HttpSession {
     }
 
 
+    public void removeAttribute(String key) {
+        attributes.remove(key);
+    }
+    
+    
 }

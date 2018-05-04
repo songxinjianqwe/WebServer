@@ -10,8 +10,8 @@
 <body>
     <p>修改用户信息</p>
     <form method="post" action="http://localhost:8080/user/edit">
-        真实姓名: <input type="text" name="realName" value="${requestScope.realName}" />
-        年龄: <input type="age" name="age" value="${requestScope.age}" />
+        真实姓名: <input type="text" name="realName" value="${requestScope.user.realName}" />
+        年龄: <input type="age" name="age" value="${requestScope.user.age}" />
         <input type="submit" value="修改"/>
     </form>
 </body>

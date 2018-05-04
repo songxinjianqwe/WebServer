@@ -6,7 +6,6 @@ import com.sinjinsong.webserver.core.cookie.Cookie;
 import com.sinjinsong.webserver.core.exception.FilterNotFoundException;
 import com.sinjinsong.webserver.core.exception.ServletNotFoundException;
 import com.sinjinsong.webserver.core.filter.Filter;
-import com.sinjinsong.webserver.core.listener.HttpSessionAttributeListener;
 import com.sinjinsong.webserver.core.listener.HttpSessionListener;
 import com.sinjinsong.webserver.core.listener.ServletContextListener;
 import com.sinjinsong.webserver.core.listener.ServletRequestListener;
@@ -254,7 +253,7 @@ public class ServletContext {
                 values.add(value);
             }
         }
-
+        
         // 解析listener
         Element listener = root.element("listener");
         List<Element> listenerEles = listener.elements("listener-class");
@@ -311,14 +310,6 @@ public class ServletContext {
         }
     }
 
-    public Object getAttribute(String key) {
-        return attributes.get(key);
-    }
-
-    public void setAttribute(String key, Object value) {
-        attributes.put(key, value);
-    }
-
     public void afterRequestCreated(Request request) {
         ServletRequestEvent servletRequestEvent = new ServletRequestEvent(this, request);
         for (ServletRequestListener listener : servletRequestListeners) {
@@ -332,4 +323,13 @@ public class ServletContext {
             listener.requestDestroyed(servletRequestEvent);
         }
     }
+    
+    public Object getAttribute(String key) {
+        return attributes.get(key);
+    }
+
+    public void setAttribute(String key, Object value) {
+        attributes.put(key, value);
+    }
+
 }

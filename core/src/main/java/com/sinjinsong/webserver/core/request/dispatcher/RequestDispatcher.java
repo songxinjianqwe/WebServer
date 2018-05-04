@@ -11,5 +11,5 @@ import java.io.IOException;
  */
 public interface RequestDispatcher {
     
-    void forward(Request request, Response response)  throws ServletException, IOException;
+    void forward(Request request, Response response) throws ServletException, IOException;
 }

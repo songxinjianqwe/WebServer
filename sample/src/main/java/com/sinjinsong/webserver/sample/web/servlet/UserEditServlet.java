@@ -26,9 +26,7 @@ public class UserEditServlet extends HttpServlet {
     @Override
     public void doGet(Request request, Response response) throws ServletException, IOException {
         User user = userService.findByUsername((String) request.getSession().getAttribute("username"));
-        request.setAttribute("username",user.getUsername());
-        request.setAttribute("realName",user.getRealName());
-        request.setAttribute("age",user.getAge());
+        request.setAttribute("user",user);
         request.getRequestDispatcher("/views/userEdit.html").forward(request,response);
     }
 
@@ -41,9 +39,7 @@ public class UserEditServlet extends HttpServlet {
         user.setAge(Integer.valueOf(request.getParameter("age")));
         userService.update(user);
         
-        request.setAttribute("username", user.getUsername());
-        request.setAttribute("realName", user.getRealName());
-        request.setAttribute("age", user.getAge());
+        request.setAttribute("user",user);
         request.getRequestDispatcher("/views/user.html").forward(request, response);
     }
 }
