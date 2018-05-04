@@ -1,6 +1,5 @@
 package com.sinjinsong.webserver.core.connector;
 
-import com.sinjinsong.webserver.core.server.Server;
 import com.sinjinsong.webserver.core.wrapper.NioSocketWrapper;
 import lombok.AllArgsConstructor;
 import lombok.Data;

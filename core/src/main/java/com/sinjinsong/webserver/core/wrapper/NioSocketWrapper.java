@@ -1,6 +1,6 @@
 package com.sinjinsong.webserver.core.wrapper;
 
-import com.sinjinsong.webserver.core.server.Server;
+import com.sinjinsong.webserver.core.connector.Server;
 import com.sinjinsong.webserver.core.connector.Poller;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;

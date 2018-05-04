@@ -1,6 +1,6 @@
 package com.sinjinsong.webserver.core;
 
-import com.sinjinsong.webserver.core.server.Server;
+import com.sinjinsong.webserver.core.connector.Server;
 
 import java.util.Scanner;
 

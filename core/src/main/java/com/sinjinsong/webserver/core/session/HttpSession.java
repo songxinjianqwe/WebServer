@@ -1,6 +1,6 @@
 package com.sinjinsong.webserver.core.session;
 
-import com.sinjinsong.webserver.core.server.WebApplication;
+import com.sinjinsong.webserver.core.context.WebApplication;
 
 import java.time.Instant;
 import java.util.Map;

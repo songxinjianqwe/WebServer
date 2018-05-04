@@ -6,7 +6,7 @@ import com.sinjinsong.webserver.core.enumeration.RequestMethod;
 import com.sinjinsong.webserver.core.exception.RequestInvalidException;
 import com.sinjinsong.webserver.core.exception.RequestParseException;
 import com.sinjinsong.webserver.core.cookie.Cookie;
-import com.sinjinsong.webserver.core.server.WebApplication;
+import com.sinjinsong.webserver.core.context.WebApplication;
 import com.sinjinsong.webserver.core.session.HttpSession;
 import com.sinjinsong.webserver.core.request.dispatcher.RequestDispatcher;
 import com.sinjinsong.webserver.core.request.dispatcher.impl.ApplicationRequestDispatcher;

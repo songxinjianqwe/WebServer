@@ -1,6 +1,6 @@
 package com.sinjinsong.webserver.core.servlet;
 
-import com.sinjinsong.webserver.core.server.WebApplication;
+import com.sinjinsong.webserver.core.context.WebApplication;
 import com.sinjinsong.webserver.core.exception.base.ServletException;
 import com.sinjinsong.webserver.core.exception.handler.ExceptionHandler;
 import com.sinjinsong.webserver.core.request.Request;

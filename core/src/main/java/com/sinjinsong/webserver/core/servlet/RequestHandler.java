@@ -8,7 +8,7 @@ import com.sinjinsong.webserver.core.filter.FilterChain;
 import com.sinjinsong.webserver.core.request.Request;
 import com.sinjinsong.webserver.core.resource.ResourceHandler;
 import com.sinjinsong.webserver.core.response.Response;
-import com.sinjinsong.webserver.core.server.WebApplication;
+import com.sinjinsong.webserver.core.context.WebApplication;
 import com.sinjinsong.webserver.core.wrapper.NioSocketWrapper;
 import lombok.AllArgsConstructor;
 import lombok.Getter;

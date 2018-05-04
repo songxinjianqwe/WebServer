@@ -1,6 +1,5 @@
 package com.sinjinsong.webserver.core.connector;
 
-import com.sinjinsong.webserver.core.server.Server;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;

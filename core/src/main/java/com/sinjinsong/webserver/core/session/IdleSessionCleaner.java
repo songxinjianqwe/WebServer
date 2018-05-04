@@ -1,6 +1,6 @@
 package com.sinjinsong.webserver.core.session;
 
-import com.sinjinsong.webserver.core.server.WebApplication;
+import com.sinjinsong.webserver.core.context.WebApplication;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.concurrent.Executors;

@@ -1,8 +1,5 @@
-package com.sinjinsong.webserver.core.server;
+package com.sinjinsong.webserver.core.connector;
 
-import com.sinjinsong.webserver.core.connector.Acceptor;
-import com.sinjinsong.webserver.core.connector.IdleConnectionCleaner;
-import com.sinjinsong.webserver.core.connector.Poller;
 import com.sinjinsong.webserver.core.servlet.DispatcherServlet;
 import com.sinjinsong.webserver.core.wrapper.NioSocketWrapper;
 import lombok.extern.slf4j.Slf4j;
