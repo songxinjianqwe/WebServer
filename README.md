@@ -16,17 +16,9 @@
 - session
 - cookie
 - filter
-<<<<<<< HEAD
--listener 
-## 使用技术
-
-基于Java BIO、多线程、Socket网络编程、XML解析、log4j/slf4j日志
-=======
 - listener 
-
 ## 使用技术
 基于Java BIO/NIO/AIO、多线程、Socket网络编程、XML解析、log4j/slf4j日志
->>>>>>> master
 
 ## 打包
 - 必须使用maven的assembly插件，它可以把依赖的jar包打进来并且解压
