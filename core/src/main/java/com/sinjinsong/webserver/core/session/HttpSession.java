@@ -14,7 +14,7 @@ public class HttpSession {
     private Map<String, Object> attributes;
     private boolean isValid;
     private Instant lastAccessed;
-    
+
 
     public HttpSession(String id) {
         this.id = id;
@@ -27,9 +27,8 @@ public class HttpSession {
         this.isValid = false;
         this.attributes.clear();
         WebApplication.getServletContext().invalidateSession(this);
-        
     }
-    
+
     public Object getAttribute(String key) {
         if (isValid) {
             this.lastAccessed = Instant.now();
@@ -37,12 +36,17 @@ public class HttpSession {
         }
         throw new IllegalStateException("session has invalidated");
     }
-    
+
     public void setAttribute(String key, Object value) {
         if (isValid) {
             this.lastAccessed = Instant.now();
+            if (attributes.containsKey(key)) {
+                WebApplication.getServletContext().afterAttributeReplaced(this, key, value);
+            } else {
+                WebApplication.getServletContext().afterAttributeAdded(this, key, value);
+            }
             attributes.put(key, value);
-        }else{
+        } else {
             throw new IllegalStateException("session has invalidated");
         }
     }
@@ -50,10 +54,10 @@ public class HttpSession {
     public String getId() {
         return id;
     }
-    
+
     public Instant getLastAccessed() {
         return lastAccessed;
     }
 
-    
+
 }
