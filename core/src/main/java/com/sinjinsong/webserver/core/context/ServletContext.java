@@ -296,7 +296,7 @@ public class ServletContext {
         for (Iterator<Map.Entry<String, HttpSession>> it = sessions.entrySet().iterator(); it.hasNext(); ) {
             Map.Entry<String, HttpSession> entry = it.next();
             if (Duration.between(entry.getValue().getLastAccessed(), Instant.now()).getSeconds() >= DEFAULT_SESSION_EXPIRE_TIME) {
-                log.info("该session {} 已过期", entry.getKey());
+//                log.info("该session {} 已过期", entry.getKey());
                 afterSessionDestroyed(entry.getValue());
                 it.remove();
             }

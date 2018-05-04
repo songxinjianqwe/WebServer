@@ -1,13 +1,11 @@
 package com.sinjinsong.webserver.core.response;
 
-import com.sinjinsong.webserver.core.enumeration.HTTPStatus;
 import com.sinjinsong.webserver.core.cookie.Cookie;
-import com.sinjinsong.webserver.core.servlet.RequestHandler;
+import com.sinjinsong.webserver.core.enumeration.HTTPStatus;
+import com.sinjinsong.webserver.core.network.handler.AbstractRequestHandler;
 import lombok.extern.slf4j.Slf4j;
 
-import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.nio.channels.SocketChannel;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -41,11 +39,9 @@ public class Response {
     private HTTPStatus status = HTTPStatus.OK;
     private String contentType = DEFAULT_CONTENT_TYPE;
     private byte[] body = new byte[0];
-    private SocketChannel socketChannel;
-    private RequestHandler requestHandler;
+    private AbstractRequestHandler requestHandler;
     
-    public Response(SocketChannel socketChannel) {
-        this.socketChannel = socketChannel;
+    public Response() {
         this.headerAppender = new StringBuilder();
         this.cookies = new ArrayList<>();
         this.headers = new ArrayList<>();
@@ -94,34 +90,40 @@ public class Response {
     }
 
     //一次性传入响应体
-    public Response buildBody() {
+    private Response buildBody() {
         this.headerAppender.append(body.length).append(CRLF).append(CRLF);
         return this;
     }
-
-    public void writeToClient() {
-        //默认返回OK
+    
+    public ByteBuffer[] getResponseByteBuffer() {
         buildHeader();
         buildBody();
         byte[] header = this.headerAppender.toString().getBytes(UTF_8_CHARSET);
         ByteBuffer[] response = {ByteBuffer.wrap(header), ByteBuffer.wrap(body)};
-        try {
-            socketChannel.write(response);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        return response;
     }
     
-    public void setRequestHandler(RequestHandler requestHandler) {
-        this.requestHandler = requestHandler;
+    public byte[] getResponseBytes() {
+        buildHeader();
+        buildBody();
+        byte[] header = this.headerAppender.toString().getBytes(UTF_8_CHARSET);
+        byte[] response = new byte[header.length + body.length];
+        System.arraycopy(header,0,response,0,header.length);
+        System.arraycopy(body,0,response,header.length,body.length);
+        return response;
     }
-
+    
     public void sendRedirect(String url) {
+        requestHandler.getSocketWrapper();
         log.info("重定向至{}", url);
         addHeader(new Header("Location", url));
         setStatus(HTTPStatus.MOVED_TEMPORARILY);
         buildHeader();
         buildBody();
         requestHandler.finishRequest();
+    }
+    
+    public void setRequestHandler(AbstractRequestHandler requestHandler) {
+        this.requestHandler = requestHandler;
     }
 }

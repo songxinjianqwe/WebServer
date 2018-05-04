@@ -1,6 +1,7 @@
 package com.sinjinsong.webserver.core;
 
-import com.sinjinsong.webserver.core.server.Server;
+import com.sinjinsong.webserver.core.network.endpoint.Endpoint;
+import com.sinjinsong.webserver.core.util.PropertyUtil;
 
 import java.util.Scanner;
 
@@ -10,18 +11,17 @@ import java.util.Scanner;
  */
 public class BootStrap {
     
-    public static void run(String port) {
-        Server server;
+    public static void run() {
+        String port = PropertyUtil.getProperty("server.port");
         if(port == null) {
-            server = new Server();
-        }else {
-            try{
-                int p = Integer.parseInt(port);
-                server = new Server(p);
-            }catch (NumberFormatException e) {
-                server = new Server();
-            }
+            throw new IllegalArgumentException("server.port 不存在");
         }
+        String connector = PropertyUtil.getProperty("server.connector");
+        if(connector == null || (!connector.equalsIgnoreCase("bio") && !connector.equalsIgnoreCase("nio") && !connector.equalsIgnoreCase("aio"))) {
+            throw new IllegalArgumentException("server.network 不存在或不符合规范");
+        }
+        Endpoint server = Endpoint.getInstance(connector);
+        server.start(Integer.parseInt(port));
         Scanner scanner = new Scanner(System.in);
         String order;
         while (scanner.hasNext()) {

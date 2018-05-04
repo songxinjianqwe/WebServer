@@ -4,8 +4,8 @@ import com.sinjinsong.webserver.core.exception.RequestInvalidException;
 import com.sinjinsong.webserver.core.exception.base.ServletException;
 import com.sinjinsong.webserver.core.response.Header;
 import com.sinjinsong.webserver.core.response.Response;
-import com.sinjinsong.webserver.core.wrapper.NioSocketWrapper;
 import com.sinjinsong.webserver.core.util.IOUtil;
+import com.sinjinsong.webserver.core.network.wrapper.SocketWrapper;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
@@ -18,7 +18,7 @@ import static com.sinjinsong.webserver.core.constant.ContextConstant.ERROR_PAGE;
 @Slf4j
 public class ExceptionHandler {
 
-    public void handle(ServletException e, Response response, NioSocketWrapper socketWrapper) {
+    public void handle(ServletException e, Response response, SocketWrapper socketWrapper) {
         try {
             if (e instanceof RequestInvalidException) {
                 log.info("请求无法读取，丢弃");

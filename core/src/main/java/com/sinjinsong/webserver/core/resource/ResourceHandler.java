@@ -10,7 +10,7 @@ import com.sinjinsong.webserver.core.response.Response;
 import com.sinjinsong.webserver.core.template.TemplateResolver;
 import com.sinjinsong.webserver.core.util.IOUtil;
 import com.sinjinsong.webserver.core.util.MimeTypeUtil;
-import com.sinjinsong.webserver.core.wrapper.NioSocketWrapper;
+import com.sinjinsong.webserver.core.network.wrapper.nio.NioSocketWrapper;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;

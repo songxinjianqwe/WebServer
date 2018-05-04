@@ -6,15 +6,17 @@ import com.sinjinsong.webserver.core.listener.event.HttpSessionEvent;
 import com.sinjinsong.webserver.core.listener.event.ServletContextEvent;
 import lombok.extern.slf4j.Slf4j;
 
+import java.util.concurrent.atomic.AtomicInteger;
+
 
 /**
  * @author sinjinsong
  * @date 2017/12/24
  */
 @Slf4j
-public class ServletContextAndSessionListener implements ServletContextListener,HttpSessionListener {
-    private int sessionCount = 0;
-    
+public class ServletContextAndSessionListener implements ServletContextListener, HttpSessionListener {
+    private AtomicInteger sessionCount = new AtomicInteger();
+
     @Override
     public void contextInitialized(ServletContextEvent sce) {
         log.info("servlet context init...");
@@ -27,13 +29,11 @@ public class ServletContextAndSessionListener implements ServletContextListener,
 
     @Override
     public void sessionCreated(HttpSessionEvent se) {
-        this.sessionCount++;
-        log.info("session created, count = {}",this.sessionCount);
+        log.info("session created, count = {}", this.sessionCount.incrementAndGet());
     }
 
     @Override
     public void sessionDestroyed(HttpSessionEvent se) {
-        this.sessionCount--;
-        log.info("session destroyed, count = {}",this.sessionCount);
+        log.info("session destroyed, count = {}", sessionCount.decrementAndGet());
     }
 }

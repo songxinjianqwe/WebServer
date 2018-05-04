@@ -2,26 +2,23 @@ package com.sinjinsong.webserver.core.request;
 
 import com.sinjinsong.webserver.core.constant.CharConstant;
 import com.sinjinsong.webserver.core.constant.CharsetProperties;
+import com.sinjinsong.webserver.core.context.ServletContext;
+import com.sinjinsong.webserver.core.context.WebApplication;
+import com.sinjinsong.webserver.core.cookie.Cookie;
 import com.sinjinsong.webserver.core.enumeration.RequestMethod;
 import com.sinjinsong.webserver.core.exception.RequestInvalidException;
 import com.sinjinsong.webserver.core.exception.RequestParseException;
-import com.sinjinsong.webserver.core.cookie.Cookie;
-import com.sinjinsong.webserver.core.server.WebApplication;
-import com.sinjinsong.webserver.core.session.HttpSession;
 import com.sinjinsong.webserver.core.request.dispatcher.RequestDispatcher;
 import com.sinjinsong.webserver.core.request.dispatcher.impl.ApplicationRequestDispatcher;
-import com.sinjinsong.webserver.core.servlet.RequestHandler;
-import com.sinjinsong.webserver.core.context.ServletContext;
+import com.sinjinsong.webserver.core.network.handler.AbstractRequestHandler;
+import com.sinjinsong.webserver.core.session.HttpSession;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
-import java.nio.ByteBuffer;
-import java.nio.channels.SocketChannel;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -29,42 +26,13 @@ import java.util.Map;
 
 /**
  * Created by SinjinSong on 2017/7/20.
- * <p>
- * GET /search?hl=zh-CN&source=hp&q=domety&aq=f&oq= HTTP/1.1
- * Accept: image/gif, image/x-xbitmap, image/jpeg, image/pjpeg, application/vnd.ms-excel, application/vnd.ms-powerpoint,
- * application/msword, application/x-silverlight
- * Referer: <a href="http://www.google.cn/">http://www.google.cn/</a>
- * Accept-Language: zh-cn
- * Accept-Encoding: gzip, deflate
- * User-Agent: Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1; SV1; .NET CLR 2.0.50727; TheWorld)
- * Host: <a href="http://www.google.cn">www.google.cn</a>
- * Connection: Keep-Alive
- * Cookie: PREF=ID=80a06da87be9ae3c:U=f7167333e2c3b714:NW=1:TM=1261551909:LM=1261551917:S=ybYcq2wpfefs4V9g;
- * NID=31=ojj8d-IygaEtSxLgaJmqSjVhCspkviJrB6omjamNrSm8lZhKy_yMfO2M4QMRKcH1g0iQv9u-2hfBW7bUFwVh7pGaRUb0RnHcJU37y-
- * FxlRugatx63JLv7CWMD6UB_O_r
- * <p>
- * POST /search HTTP/1.1
- * Accept: image/gif, image/x-xbitmap, image/jpeg, image/pjpeg, application/vnd.ms-excel, application/vnd.ms-powerpoint,
- * application/msword, application/x-silverlight
- * Referer: <a href="http://www.google.cn/">http://www.google.cn/</a>
- * Accept-Language: zh-cn
- * Accept-Encoding: gzip,deflate
- * User-Agent: Mozilla/4.0(compatible;MSIE6.0;Windows NT5.1;SV1;.NET CLR2.0.50727;TheWorld)
- * Host: <a href="http://www.google.cn">www.google.cn</a>
- * Connection: Keep-Alive
- * Cookie: PREF=ID=80a06da87be9ae3c:U=f7167333e2c3b714:NW=1:TM=1261551909:LM=1261551917:S=ybYcq2wpfefs4V9g;
- * NID=31=ojj8d-IygaEtSxLgaJmqSjVhCspkviJrB6omjamNrSm8lZhKy_yMfO2M4QMRKcH1g0iQv9u-2hfBW7bUFwVh7pGaRUb0RnHcJU37y-
- * FxlRugatx63JLv7CWMD6UB_O_r
- * <p>
- * hl=zh-CN&source=hp&q=domety
  */
-
 @Getter
 @Setter
 @Slf4j
 public class Request {
 
-    private RequestHandler requestHandler;
+    private AbstractRequestHandler requestHandler;
     private RequestMethod method;
     private String url;
     private Map<String, List<String>> params;
@@ -84,23 +52,15 @@ public class Request {
     /**
      * 读取请求体只能使用字节流，使用字符流读不到
      *
-     * @param socketChannel
+     * @param data
      * @throws RequestParseException
      */
-    public Request(SocketChannel socketChannel) throws RequestParseException, RequestInvalidException, IOException {
+    public Request(byte[] data) throws RequestParseException, RequestInvalidException, IOException {
         this.attributes = new HashMap<>();
-        ByteBuffer buffer = ByteBuffer.allocate(1024);
-        log.info("开始读取Request");
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        while (socketChannel.read(buffer) > 0) {
-            buffer.flip();
-            baos.write(buffer.array());
-        }
-        baos.close();
         String[] lines = null;
         try {
             //支持中文，对中文进行URL解码
-            lines = URLDecoder.decode(new String(baos.toByteArray(), CharsetProperties.UTF_8_CHARSET), CharsetProperties.UTF_8).split(CharConstant.CRLF);
+            lines = URLDecoder.decode(new String(data, CharsetProperties.UTF_8_CHARSET), CharsetProperties.UTF_8).split(CharConstant.CRLF);
         } catch (UnsupportedEncodingException e) {
             e.printStackTrace();
         }
@@ -137,13 +97,9 @@ public class Request {
     /**
      * 如果请求报文中携带JSESSIONID这个Cookie，那么取出对应的session
      * 否则创建一个Session，并在响应报文中添加一个响应头Set-Cookie: JSESSIONID=D5A5C79F3C8E8653BC8B4F0860BFDBCD
-     * <p>
      * 所有从请求报文中得到的Cookie，都会在响应报文中返回
-     * <p>
      * 服务器只会在客户端第一次请求响应的时候，在响应头上添加Set-Cookie：“JSESSIONID=XXXXXXX”信息，
      * 接下来在同一个会话的第二第三次响应头里，是不会添加Set-Cookie：“JSESSIONID=XXXXXXX”信息的；
-     * <p>
-     * <p>
      * 即，如果在Cookie中读到的JSESSIONID，那么不会创建新的Session，也不会在响应头中加入Set-Cookie：“JSESSIONID=XXXXXXX”
      * 如果没有读到，那么会创建新的Session，并在响应头中加入Set-Cookie：“JSESSIONID=XXXXXXX”
      * 如果没有调用getSession，那么不会创建新的Session
@@ -177,7 +133,7 @@ public class Request {
     public String getServletPath() {
         return url;
     }
-
+    
     private void parseHeaders(String[] lines) {
         log.info("解析请求头");
         String firstLine = lines[0];
@@ -236,7 +192,7 @@ public class Request {
         if (lengths != null) {
             int length = Integer.parseInt(lengths.get(0));
             log.info("length:{}", length);
-            parseParams(new String(bytes, 0, length, CharsetProperties.UTF_8_CHARSET).trim());
+            parseParams(new String(bytes, 0, Math.min(length,bytes.length), CharsetProperties.UTF_8_CHARSET).trim());
         } else {
             parseParams(body.trim());
         }

@@ -1,6 +1,4 @@
-package com.sinjinsong.webserver.core.server;
-
-import com.sinjinsong.webserver.core.context.ServletContext;
+package com.sinjinsong.webserver.core.context;
 
 /**
  * Created by SinjinSong on 2017/7/21.

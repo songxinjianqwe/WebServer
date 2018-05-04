@@ -1,4 +1,4 @@
-package com.sinjinsong.webserver.core.connector;
+package com.sinjinsong.webserver.core.network.connector.nio;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -15,11 +15,11 @@ import java.util.concurrent.TimeUnit;
 @Slf4j
 public class IdleConnectionCleaner implements Runnable {
     private ScheduledExecutorService executor;
-    private List<Poller> pollers;
+    private List<NioPoller> nioPollers;
     private int keepAliveTimeout;
 
-    public IdleConnectionCleaner(List<Poller> pollers, int keepAliveTimeout) {
-        this.pollers = pollers;
+    public IdleConnectionCleaner(List<NioPoller> nioPollers, int keepAliveTimeout) {
+        this.nioPollers = nioPollers;
         this.keepAliveTimeout = keepAliveTimeout;
     }
 
@@ -31,7 +31,7 @@ public class IdleConnectionCleaner implements Runnable {
             }
         };
         executor = Executors.newSingleThreadScheduledExecutor(threadFactory);
-        executor.scheduleWithFixedDelay(this, 0, keepAliveTimeout, TimeUnit.MILLISECONDS);
+        executor.scheduleWithFixedDelay(this, 0, 5, TimeUnit.SECONDS);
     }
 
     public void shutdown() {
@@ -40,9 +40,9 @@ public class IdleConnectionCleaner implements Runnable {
 
     @Override
     public void run() {
-        for (Poller poller : pollers) {
-            log.info("Cleaner 检测{} 所持有的Socket中...", poller.getPollerName());
-            poller.cleanTimeoutSockets();
+        for (NioPoller nioPoller : nioPollers) {
+            log.info("Cleaner 检测{} 所持有的Socket中...", nioPoller.getPollerName());
+            nioPoller.cleanTimeoutSockets();
         }
         log.info("检测结束...");
     }

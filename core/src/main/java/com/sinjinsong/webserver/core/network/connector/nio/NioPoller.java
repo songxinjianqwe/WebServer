@@ -1,7 +1,7 @@
-package com.sinjinsong.webserver.core.connector;
+package com.sinjinsong.webserver.core.network.connector.nio;
 
-import com.sinjinsong.webserver.core.server.Server;
-import com.sinjinsong.webserver.core.wrapper.NioSocketWrapper;
+import com.sinjinsong.webserver.core.network.endpoint.nio.NioEndpoint;
+import com.sinjinsong.webserver.core.network.wrapper.nio.NioSocketWrapper;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
@@ -19,27 +19,27 @@ import java.util.concurrent.ConcurrentLinkedQueue;
  * @date 2018/3/6
  */
 @Slf4j
-public class Poller implements Runnable {
-    private Server server;
+public class NioPoller implements Runnable {
+    private NioEndpoint nioEndpoint;
     private Selector selector;
     private Queue<PollerEvent> events;
     private String pollerName;
     private Map<SocketChannel, NioSocketWrapper> sockets;
-
-    public Poller(Server server, String pollerName) throws IOException {
+        
+    public NioPoller(NioEndpoint nioEndpoint, String pollerName) throws IOException {
         this.sockets = new ConcurrentHashMap<>();
-        this.server = server;
+        this.nioEndpoint = nioEndpoint;
         this.selector = Selector.open();
-        this.events = new ConcurrentLinkedQueue();
+        this.events = new ConcurrentLinkedQueue<>();
         this.pollerName = pollerName;
     }
-
+    
     public void register(SocketChannel socketChannel, boolean isNewSocket) {
         log.info("Acceptor将连接到的socket放入 {} 的Queue中", pollerName);
         NioSocketWrapper wrapper;
         if (isNewSocket) {
             // 设置waitBegin
-            wrapper = new NioSocketWrapper(server, socketChannel, this, isNewSocket);
+            wrapper = new NioSocketWrapper(nioEndpoint, socketChannel, this, isNewSocket);
             // 用于cleaner检测超时的socket和关闭socket
             sockets.put(socketChannel, wrapper);
         } else {
@@ -63,7 +63,7 @@ public class Poller implements Runnable {
     @Override
     public void run() {
         log.info("{} 开始监听", Thread.currentThread().getName());
-        while (server.isRunning()) {
+        while (nioEndpoint.isRunning()) {
             try {
                 events();
                 if (selector.select() <= 0) {
@@ -88,15 +88,15 @@ public class Poller implements Runnable {
                 }
             } catch (IOException e) {
                 e.printStackTrace();
-            } catch(ClosedSelectorException e){
-                log.info("{} 对应的selector 已关闭",this.pollerName);
+            } catch (ClosedSelectorException e) {
+                log.info("{} 对应的selector 已关闭", this.pollerName);
             }
         }
     }
 
     private void processSocket(NioSocketWrapper attachment) {
         attachment.setWorking(true);
-        server.execute(attachment);
+        nioEndpoint.execute(attachment);
     }
 
     private boolean events() {
@@ -117,7 +117,7 @@ public class Poller implements Runnable {
     public String getPollerName() {
         return pollerName;
     }
-    
+
     public void cleanTimeoutSockets() {
         for (Iterator<Map.Entry<SocketChannel, NioSocketWrapper>> it = sockets.entrySet().iterator(); it.hasNext(); ) {
             NioSocketWrapper wrapper = it.next().getValue();
@@ -131,7 +131,7 @@ public class Poller implements Runnable {
                 log.info("该socket正在工作中，不予关闭");
                 continue;
             }
-            if (System.currentTimeMillis() - wrapper.getWaitBegin() > server.getKeepAliveTimeout()) {
+            if (System.currentTimeMillis() - wrapper.getWaitBegin() > nioEndpoint.getKeepAliveTimeout()) {
                 // 反注册
                 log.info("{} keepAlive已过期", wrapper.getSocketChannel());
                 try {
@@ -145,8 +145,6 @@ public class Poller implements Runnable {
     }
 
 
-    
-    
     @Data
     @AllArgsConstructor
     private static class PollerEvent implements Runnable {
@@ -157,7 +155,7 @@ public class Poller implements Runnable {
             log.info("将SocketChannel的读事件注册到Poller的selector中");
             try {
                 if (wrapper.getSocketChannel().isOpen()) {
-                    wrapper.getSocketChannel().register(wrapper.getPoller().getSelector(), SelectionKey.OP_READ, wrapper);
+                    wrapper.getSocketChannel().register(wrapper.getNioPoller().getSelector(), SelectionKey.OP_READ, wrapper);
                     wrapper.setWaitBegin(System.currentTimeMillis());
                 } else {
                     log.error("socket已经被关闭，无法注册到Poller", wrapper.getSocketChannel());
