@@ -55,6 +55,7 @@ http://blog.csdn.net/songxinjianqwe/article/details/75670552
 
 ### BIO
 使用JMeter进行压力测试：connection:close
+以下测试总请求次数都为20000次
 
 2个线程，每个线程循环访问10000次，吞吐量为556个请求/sec，平均响应时间为3ms
 20个线程，每个线程循环访问1000次，吞吐量为650个请求/sec,平均响应时间为22ms

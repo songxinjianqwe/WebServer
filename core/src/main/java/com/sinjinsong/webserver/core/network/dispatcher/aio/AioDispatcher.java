@@ -3,11 +3,10 @@ package com.sinjinsong.webserver.core.network.dispatcher.aio;
 import com.sinjinsong.webserver.core.exception.base.ServletException;
 import com.sinjinsong.webserver.core.network.dispatcher.AbstractDispatcher;
 import com.sinjinsong.webserver.core.network.handler.aio.AioRequestHandler;
-import com.sinjinsong.webserver.core.request.Request;
-import com.sinjinsong.webserver.core.response.Response;
 import com.sinjinsong.webserver.core.network.wrapper.SocketWrapper;
 import com.sinjinsong.webserver.core.network.wrapper.aio.AioSocketWrapper;
-import lombok.Data;
+import com.sinjinsong.webserver.core.request.Request;
+import com.sinjinsong.webserver.core.response.Response;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
@@ -18,7 +17,6 @@ import java.nio.channels.CompletionHandler;
  * @author sinjinsong
  * @date 2018/5/4
  */
-@Data
 @Slf4j
 public class AioDispatcher extends AbstractDispatcher {
     @Override
