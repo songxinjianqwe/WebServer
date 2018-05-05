@@ -20,6 +20,7 @@ import java.net.Socket;
  */
 @Slf4j
 public class BioDispatcher extends AbstractDispatcher {
+    
     @Override
     public void doDispatch(SocketWrapper socketWrapper) {
         BioSocketWrapper bioSocketWrapper = (BioSocketWrapper) socketWrapper;
@@ -38,7 +39,7 @@ public class BioDispatcher extends AbstractDispatcher {
             } catch (IOException e) {
                 e.printStackTrace();
             }
-            
+            // 这里这里不要把in关掉，把in关掉就等同于把socket关掉
             //解析请求
             response = new Response();
             request = new Request(buf);

@@ -36,8 +36,8 @@ public class AioEndpoint extends Endpoint {
                 return new Thread(r, "Endpoint Pool-" + count++);
             }
         };
-        int processores = Runtime.getRuntime().availableProcessors();
-        pool = new ThreadPoolExecutor(processores, processores, 1, TimeUnit.SECONDS, new ArrayBlockingQueue<>(200), threadFactory, new ThreadPoolExecutor.CallerRunsPolicy());
+        int processors = Runtime.getRuntime().availableProcessors();
+        pool = new ThreadPoolExecutor(processors, processors, 1, TimeUnit.SECONDS, new ArrayBlockingQueue<>(200), threadFactory, new ThreadPoolExecutor.CallerRunsPolicy());
         // 以指定线程池来创建一个AsynchronousChannelGroup  
         AsynchronousChannelGroup channelGroup = AsynchronousChannelGroup
                 .withThreadPool(pool);
@@ -47,9 +47,13 @@ public class AioEndpoint extends Endpoint {
                 .bind(new InetSocketAddress(port));
         // 使用CompletionHandler接受来自客户端的连接请求  
         aioAcceptor = new AioAcceptor(this);
-        server.accept(null, aioAcceptor);
+        // 开始接收客户端连接
+        accept();
     }
 
+    /**
+     * 接收一个客户端连接
+     */
     public void accept() {
         server.accept(null, aioAcceptor);
     }
@@ -77,6 +81,10 @@ public class AioEndpoint extends Endpoint {
         }
     }
 
+    /**
+     * 执行读已就绪的客户端连接的请求
+     * @param socketWrapper
+     */
     public void execute(AioSocketWrapper socketWrapper) {
         aioDispatcher.doDispatch(socketWrapper);
     }

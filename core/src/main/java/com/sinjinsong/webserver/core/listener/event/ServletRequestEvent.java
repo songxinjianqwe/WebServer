@@ -60,7 +60,10 @@ package com.sinjinsong.webserver.core.listener.event;
 import com.sinjinsong.webserver.core.request.Request;
 import com.sinjinsong.webserver.core.context.ServletContext;
 
-
+/**
+ * @author sinjinsong
+ * request相关的事件
+ */
 public class ServletRequestEvent extends java.util.EventObject { 
 
     private static final long serialVersionUID = -7467864054698729101L;

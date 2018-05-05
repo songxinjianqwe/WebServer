@@ -31,6 +31,9 @@ public class BioRequestHandler extends AbstractRequestHandler {
         super(socketWrapper, servletContext, exceptionHandler, resourceHandler, request, response);
     }
 
+    /**
+     * 写回后立即关闭socket
+     */
     @Override
     public void finishRequest() {
         isFinished = true;

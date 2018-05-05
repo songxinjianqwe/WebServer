@@ -28,21 +28,24 @@ public class NioEndpoint extends Endpoint {
     private volatile boolean isRunning = true;
     private NioAcceptor nioAcceptor;
     private List<NioPoller> nioPollers;
+    /**
+     * poller轮询器
+     */
     private AtomicInteger pollerRotater = new AtomicInteger(0);
     /**
      * 1min
      */
     private int keepAliveTimeout = 60 * 1000 ;
+    /**
+     * 针对keep-alive连接，如果长期没有数据交换则将其关闭
+     */
     private IdleConnectionCleaner cleaner;
     
+    //********************************初始化*************************************************************
     private void initDispatcherServlet() {
         nioDispatcher = new NioDispatcher();
     }
     
-    public void execute(NioSocketWrapper socketWrapper) {
-        nioDispatcher.doDispatch(socketWrapper);
-    }
-
     private void initServerSocket(int port) throws IOException {
         server = ServerSocketChannel.open();
         server.bind(new InetSocketAddress(port));
@@ -62,16 +65,6 @@ public class NioEndpoint extends Endpoint {
     }
 
     /**
-     * 轮询Poller，实现负载均衡
-     *
-     * @return
-     */
-    private NioPoller getPoller() {
-        int idx = Math.abs(pollerRotater.incrementAndGet()) % nioPollers.size();
-        return nioPollers.get(idx);
-    }
-    
-    /**
      * 初始化Acceptor
      */
     private void initAcceptor() {
@@ -85,10 +78,11 @@ public class NioEndpoint extends Endpoint {
      * 初始化IdleSocketCleaner
      */
     private void initIdleSocketCleaner() {
-        cleaner = new IdleConnectionCleaner(nioPollers, keepAliveTimeout);
+        cleaner = new IdleConnectionCleaner(nioPollers);
         cleaner.start();
     }
 
+    //************************初始化结束***************************************************************
     @Override
     public void start(int port) {
         try {
@@ -104,6 +98,7 @@ public class NioEndpoint extends Endpoint {
             close();
         }
     }
+    
     
     @Override
     public void close() {
@@ -124,18 +119,39 @@ public class NioEndpoint extends Endpoint {
         }
     }
 
+    /**
+     * 调用dispatcher，处理这个读已就绪的客户端连接
+     * @param socketWrapper
+     */
+    public void execute(NioSocketWrapper socketWrapper) {
+        nioDispatcher.doDispatch(socketWrapper);
+    }
+    
+     /**
+     * 轮询Poller，实现负载均衡
+     * @return
+     */
+    private NioPoller getPoller() {
+        int idx = Math.abs(pollerRotater.incrementAndGet()) % nioPollers.size();
+        return nioPollers.get(idx);
+    }
 
     public boolean isRunning() {
         return isRunning;
     }
 
+    /**
+     * 以阻塞方式来接收一个客户端的链接
+     * @return
+     * @throws IOException
+     */
     public SocketChannel serverSocketAccept() throws IOException {
         return server.accept();
     }
 
     /**
-     * 将Acceptor接收到的socket放到随机一个Poller的Queue中
-     *
+     * 将Acceptor接收到的socket放到轮询到的一个Poller的Queue中
+     *  
      * @param socket
      * @return
      */

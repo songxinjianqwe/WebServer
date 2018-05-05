@@ -21,6 +21,8 @@ import java.util.List;
 /**
  * @author sinjinsong
  * @date 2018/5/4
+ * RequestHandler 的父类，通过父类来复用成员变量和部分方法
+ * 不同IO模型的RequestHandler基本是在将Response写回客户端这部分有不同的实现，在这里被设置为了抽象方法
  */
 @Slf4j
 @Getter
@@ -48,19 +50,34 @@ public abstract class AbstractRequestHandler implements FilterChain, Runnable {
         request.setServletContext(servletContext);
         request.setRequestHandler(this);
         response.setRequestHandler(this);
+        // 根据url查询匹配的servlet，结果是0个或1个
         servlet = servletContext.mapServlet(request.getUrl());
+        // 根据url查询匹配的filter，结果是0个或多个
         filters = servletContext.mapFilter(request.getUrl());
     }
 
+    /**
+     * 入口
+     */
     @Override
     public void run() {
+        // 如果没有filter，则直接执行servlet
         if (filters.isEmpty()) {
             service();
         } else {
+            // 先执行filter
             doFilter(request, response);
         }
     }
-   
+
+    /**
+     * 递归执行，自定义filter中如果同意放行，那么会调用filterChain(也就是requestHandler)的doiFilter方法，
+     * 此时会执行下一个filter的doFilter方法；
+     * 如果不放行，那么会在sendRedirect之后将响应数据写回客户端，结束；
+     * 如果所有Filter都执行完毕，那么会调用service方法，执行servlet逻辑
+     * @param request
+     * @param response
+     */
     @Override
     public void doFilter(Request request, Response response) {
         if (filterIndex < filters.size()) {
@@ -70,6 +87,9 @@ public abstract class AbstractRequestHandler implements FilterChain, Runnable {
         }
     }
 
+    /**
+     * 调用servlet
+     */
     private void service() {
         log.info("socket isClosed: {}",this.socketWrapper.isClosed());
         try {
@@ -90,6 +110,6 @@ public abstract class AbstractRequestHandler implements FilterChain, Runnable {
         }
         log.info("请求处理完毕");
     }
-
+    
     public abstract void finishRequest();
 }

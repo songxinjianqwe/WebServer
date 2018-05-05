@@ -1,7 +1,7 @@
 package com.sinjinsong.webserver.core.response;
 
 import com.sinjinsong.webserver.core.cookie.Cookie;
-import com.sinjinsong.webserver.core.enumeration.HTTPStatus;
+import com.sinjinsong.webserver.core.enumeration.HttpStatus;
 import com.sinjinsong.webserver.core.network.handler.AbstractRequestHandler;
 import lombok.extern.slf4j.Slf4j;
 
@@ -17,38 +17,28 @@ import static com.sinjinsong.webserver.core.constant.ContextConstant.DEFAULT_CON
 
 /**
  * Created by SinjinSong on 2017/7/20.
- * HTTP/1.1 200 OK
- * Date: Sat, 31 Dec 2005 23:59:59 GMT
- * Content-Type: text/html;constant=ISO-8859-1
- * Content-Length: 122
- * <p>
- * ＜html＞
- * ＜head＞
- * ＜title＞Wrox Homepage＜/title＞
- * ＜/head＞
- * ＜buildBody＞
- * ＜!-- buildBody goes here --＞
- * ＜/buildBody＞
- * ＜/html＞
  */
 @Slf4j
 public class Response {
     private StringBuilder headerAppender;
     private List<Cookie> cookies;
     private List<Header> headers;
-    private HTTPStatus status = HTTPStatus.OK;
+    private HttpStatus status = HttpStatus.OK;
     private String contentType = DEFAULT_CONTENT_TYPE;
     private byte[] body = new byte[0];
     private AbstractRequestHandler requestHandler;
-    
+
     public Response() {
         this.headerAppender = new StringBuilder();
         this.cookies = new ArrayList<>();
         this.headers = new ArrayList<>();
     }
 
-
-    public void setStatus(HTTPStatus status) {
+    /**
+     * 设置HTTP Status
+     * @param status
+     */
+    public void setStatus(HttpStatus status) {
         this.status = status;
     }
 
@@ -68,8 +58,9 @@ public class Response {
     public void addHeader(Header header) {
         headers.add(header);
     }
-
-    private Response buildHeader() {
+    
+    
+    private void buildHeader() {
         //HTTP/1.1 200 OK
         headerAppender.append("HTTP/1.1").append(BLANK).append(status.getCode()).append(BLANK).append(status).append(CRLF);
         //Date: Sat, 31 Dec 2005 23:59:59 GMT
@@ -86,43 +77,62 @@ public class Response {
             }
         }
         headerAppender.append("Content-Length:").append(BLANK);
-        return this;
     }
 
     //一次性传入响应体
-    private Response buildBody() {
+    private void buildBody() {
         this.headerAppender.append(body.length).append(CRLF).append(CRLF);
-        return this;
     }
-    
-    public ByteBuffer[] getResponseByteBuffer() {
+
+    /**
+     * response构建的最后一步，将header和body转为字节数组
+     */
+    private void buildResponse() {
         buildHeader();
         buildBody();
+    }
+    
+    /**
+     * 返回Response构建后的数据，用于NIO/AIO
+     * @return
+     */
+    public ByteBuffer[] getResponseByteBuffer() {
+        buildResponse();
         byte[] header = this.headerAppender.toString().getBytes(UTF_8_CHARSET);
         ByteBuffer[] response = {ByteBuffer.wrap(header), ByteBuffer.wrap(body)};
         return response;
     }
-    
+
+    /**
+     * 返回Response构建后的数据，用于BIO
+     * @return
+     */
     public byte[] getResponseBytes() {
-        buildHeader();
-        buildBody();
+        buildResponse();
         byte[] header = this.headerAppender.toString().getBytes(UTF_8_CHARSET);
         byte[] response = new byte[header.length + body.length];
-        System.arraycopy(header,0,response,0,header.length);
-        System.arraycopy(body,0,response,header.length,body.length);
+        System.arraycopy(header, 0, response, 0, header.length);
+        System.arraycopy(body, 0, response, header.length, body.length);
         return response;
     }
-    
+
+    /**
+     * 重定向，注意重定向后会立即写数据至socket中
+     * @param url
+     */
     public void sendRedirect(String url) {
-        requestHandler.getSocketWrapper();
         log.info("重定向至{}", url);
         addHeader(new Header("Location", url));
-        setStatus(HTTPStatus.MOVED_TEMPORARILY);
-        buildHeader();
-        buildBody();
+        setStatus(HttpStatus.MOVED_TEMPORARILY);
+        buildResponse();
+        // 刷新至客户端
         requestHandler.finishRequest();
     }
-    
+
+    /**
+     * 用于调用不同RequestHandler的写刷新（将response写入到客户端）
+     * @param requestHandler
+     */
     public void setRequestHandler(AbstractRequestHandler requestHandler) {
         this.requestHandler = requestHandler;
     }

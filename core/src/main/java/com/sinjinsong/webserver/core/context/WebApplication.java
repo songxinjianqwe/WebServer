@@ -2,6 +2,7 @@ package com.sinjinsong.webserver.core.context;
 
 /**
  * Created by SinjinSong on 2017/7/21.
+ * 静态持有servletContext，保持servletContext能在项目启动时就被初始化
  */
 public class WebApplication {
     private static ServletContext servletContext;

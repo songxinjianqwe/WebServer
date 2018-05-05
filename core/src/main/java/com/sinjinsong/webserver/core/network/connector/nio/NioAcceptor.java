@@ -9,6 +9,8 @@ import java.nio.channels.SocketChannel;
 /**
  * @author sinjinsong
  * @date 2018/3/6
+ * 
+ * Nio 请求接收器
  */
 @Slf4j
 public class NioAcceptor implements Runnable {

@@ -11,6 +11,7 @@ import java.io.IOException;
 
 /**
  * Created by SinjinSong on 2017/7/21.
+ * 根Servlet，实现了不同HTTP方法的路由
  */
 @Slf4j
 public abstract class HttpServlet implements Servlet {

@@ -11,10 +11,12 @@ import java.util.concurrent.TimeUnit;
 /**
  * @author sinjinsong
  * @date 2018/5/3
+ * 
+ * 过期session的清除器
  */
 @Slf4j
 public class IdleSessionCleaner implements Runnable {
-
+    
     private ScheduledExecutorService executor;
 
     public IdleSessionCleaner() {
@@ -30,7 +32,7 @@ public class IdleSessionCleaner implements Runnable {
     public void start() {
         executor.scheduleAtFixedRate(this, 5, 5, TimeUnit.SECONDS);
     }
-
+    
     @Override
     public void run() {
         log.info("开始扫描过期session...");

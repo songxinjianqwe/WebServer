@@ -13,7 +13,9 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * Created by SinjinSong on 2017/7/21.
+ * @author sinjinsong
+ * 简化版的模板引擎，基于正则表达式的替换
+ * 比如${a.b.c} 就可以解析为a.getB().getC()，并将值填充至占位符
  */
 @Slf4j
 public class TemplateResolver {
@@ -24,6 +26,8 @@ public class TemplateResolver {
         StringBuffer sb = new StringBuffer();
         while (matcher.find()) {
             log.info("{}", matcher.group(1));
+            // placeHolder 格式为scope.x.y.z
+            // scope值为requestScope,sessionScope,applicationScope
             String placeHolder = matcher.group(1);
             if (placeHolder.indexOf('.') == -1) {
                 throw new TemplateResolveException();
@@ -33,11 +37,13 @@ public class TemplateResolver {
                             placeHolder.substring(0, placeHolder.indexOf('.'))
                                     .replace("Scope", "")
                                     .toUpperCase());
+            // key 格式为x.y.z
             String key = placeHolder.substring(placeHolder.indexOf('.') + 1);
             if (scope == null) {
                 throw new TemplateResolveException();
             }
             Object value = null;
+            // 按照.分隔为数组,格式为[x,y,z]
             String[] segments = key.split("\\.");
             log.info("key: {} , segments:{}", key,Arrays.toString(segments));
             switch (scope) {
@@ -53,6 +59,7 @@ public class TemplateResolver {
                 default:
                     break;
             }
+            // 此时value为x，如果没有y、z，那么会直接返回；如果有，就会递归地进行属性读取（基于反射）
             if (segments.length > 1) {
                 try {
                     value = parse(value, segments, 1);
@@ -62,6 +69,7 @@ public class TemplateResolver {
                 }
             }
             log.info("value:{}", value);
+            // 如果解析得到的值为null，则将占位符去掉；否则将占位符替换为值
             if (value == null) {
                 matcher.appendReplacement(sb, "");
             } else {
@@ -69,6 +77,7 @@ public class TemplateResolver {
                 matcher.appendReplacement(sb, value.toString());
             }
         }
+        // 将源文件后续部分添加至尾部
         matcher.appendTail(sb);
         String result = sb.toString();
         return result.length() == 0 ? content : result;

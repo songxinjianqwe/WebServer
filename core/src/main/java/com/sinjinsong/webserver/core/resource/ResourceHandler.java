@@ -17,6 +17,7 @@ import java.io.IOException;
 
 /**
  * Created by SinjinSong on 2017/7/20.
+ * 用于处理静态资源
  */
 @Slf4j
 public class ResourceHandler {

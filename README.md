@@ -1,4 +1,4 @@
-# 自制HTTP服务器（包括HTTP服务器和Servlet容器）
+# 手写简化版Web服务器（包括HTTP服务器和Servlet容器）
 ## 具备的功能(均为简化版的实现)：
 - HTTP Protocol
 - Servlet
@@ -17,8 +17,10 @@
 - cookie
 - filter
 - listener 
+
 ## 使用技术
 基于Java BIO/NIO/AIO、多线程、Socket网络编程、XML解析、log4j/slf4j日志
+基于Spring的PathMatcher实现SpringMVC风格的路径匹配
 
 ## 打包
 - 必须使用maven的assembly插件，它可以把依赖的jar包打进来并且解压

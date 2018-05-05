@@ -23,8 +23,10 @@ import java.nio.ByteBuffer;
 @Slf4j
 public class NioDispatcher extends AbstractDispatcher {
     /**
-     * 请求转发，注意IO读取必须放在IO线程中进行，不能放到线程池中，否则会出现多个线程同时读同一个socket数据的情况
-     *
+     * 分发请求，注意IO读取必须放在IO线程中进行，不能放到线程池中，否则会出现多个线程同时读同一个socket数据的情况
+     * 1、读取数据
+     * 2、构造request，response
+     * 3、将业务放入到线程池中处理
      * @param socketWrapper
      */
     @Override

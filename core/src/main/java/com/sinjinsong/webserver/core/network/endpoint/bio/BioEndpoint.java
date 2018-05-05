@@ -12,6 +12,7 @@ import java.net.Socket;
 /**
  * @author sinjinsong
  * @date 2018/5/4
+ * BIO网络传输模块的入口
  */
 @Slf4j
 public class BioEndpoint extends Endpoint {
@@ -19,7 +20,7 @@ public class BioEndpoint extends Endpoint {
     private BioAcceptor acceptor;
     private BioDispatcher dispatcher;
     private volatile boolean isRunning = true;
-
+    
     @Override
     public void start(int port) {
         try {

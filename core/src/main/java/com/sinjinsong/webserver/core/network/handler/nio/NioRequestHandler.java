@@ -21,7 +21,6 @@ import java.util.List;
 
 /**
  * Created by SinjinSong on 2017/7/21.
- * Servlet运行容器
  */
 @Setter
 @Getter
@@ -32,6 +31,9 @@ public class NioRequestHandler extends AbstractRequestHandler {
         super(socketWrapper, servletContext, exceptionHandler, resourceHandler, request, response);
     }
 
+    /**
+     * 写入后会根据请求头Connection来判断是关闭连接还是重新将连接放回Poller，实现保活
+     */
     @Override
     public void finishRequest() {
         isFinished = true;

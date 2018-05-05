@@ -36,29 +36,50 @@ import static com.sinjinsong.webserver.core.constant.ContextConstant.DEFAULT_SES
 
 /**
  * Created by SinjinSong on 2017/7/21.
+ * ServletContext，在应用启动时被初始化
  */
 @Data
 @Slf4j
 public class ServletContext {
-    //别名->类名
-    //一个Servlet类只能有一个Servlet别名，一个Servlet别名只能对应一个Servlet类
+    /**
+     * 别名->类名
+     * 一个Servlet类只能有一个Servlet别名，一个Servlet别名只能对应一个Servlet类
+     */
     private Map<String, ServletHolder> servlets;
-
-    //一个Servlet可以对应多个URL，一个URL只能对应一个Servlet
-    //URL Pattern -> Servlet别名
+    /**
+     * 一个Servlet可以对应多个URL，一个URL只能对应一个Servlet
+     * URL Pattern -> Servlet别名
+     */
     private Map<String, String> servletMapping;
 
 
-    //别名->类名
+    /**
+     * 别名->类名
+     */
     private Map<String, FilterHolder> filters;
-    //URL Pattern -> 别名
+    /**
+     * URL Pattern -> 别名列表，注意同一个URLPattern可以对应多个Filter，但只能对应一个Servlet
+     */
     private Map<String, List<String>> filterMapping;
 
+    /**
+     * 监听器们
+     */
     private List<ServletContextListener> servletContextListeners;
     private List<HttpSessionListener> httpSessionListeners;
     private List<ServletRequestListener> servletRequestListeners;
+
+    /**
+     * 域
+     */
     private Map<String, Object> attributes;
+    /**
+     * 整个应用对应的session们
+     */
     private Map<String, HttpSession> sessions;
+    /**
+     * 路径匹配器，由Spring提供
+     */
     private AntPathMatcher matcher;
 
     private IdleSessionCleaner idleSessionCleaner;
@@ -100,7 +121,13 @@ public class ServletContext {
         return initAndGetServlet(DEFAULT_SERVLET_ALIAS);
     }
 
-
+    /**
+     * 初始化并获取Servlet实例，如果已经初始化过则直接返回
+     *
+     * @param servletAlias
+     * @return
+     * @throws ServletNotFoundException
+     */
     private Servlet initAndGetServlet(String servletAlias) throws ServletNotFoundException {
         ServletHolder servletHolder = servlets.get(servletAlias);
         if (servletHolder == null) {
@@ -146,6 +173,13 @@ public class ServletContext {
         return result;
     }
 
+    /**
+     * 初始化并返回Filter实例，如果已经初始化过则直接返回
+     *
+     * @param filterAlias
+     * @return
+     * @throws FilterNotFoundException
+     */
     private Filter initAndGetFilter(String filterAlias) throws FilterNotFoundException {
         FilterHolder filterHolder = filters.get(filterAlias);
         if (filterHolder == null) {
@@ -167,7 +201,13 @@ public class ServletContext {
         return filterHolder.getFilter();
     }
 
-    //从web.xml读到servlet映射
+    /**
+     * 应用初始化
+     *
+     * @throws IllegalAccessException
+     * @throws InstantiationException
+     * @throws ClassNotFoundException
+     */
     public void init() throws IllegalAccessException, InstantiationException, ClassNotFoundException {
         this.servlets = new HashMap<>();
         this.servletMapping = new HashMap<>();
@@ -188,6 +228,9 @@ public class ServletContext {
         }
     }
 
+    /**
+     * 应用关闭前被调用
+     */
     public void destroy() {
         servlets.values().forEach(servletHolder -> {
             if (servletHolder.getServlet() != null) {
@@ -206,7 +249,7 @@ public class ServletContext {
     }
 
     /**
-     * 解析web.xml配置文件
+     * web.xml文件解析，比如servlet，filter，listener等
      *
      * @throws ClassNotFoundException
      * @throws IllegalAccessException
@@ -253,7 +296,7 @@ public class ServletContext {
                 values.add(value);
             }
         }
-        
+
         // 解析listener
         Element listener = root.element("listener");
         List<Element> listenerEles = listener.elements("listener-class");
@@ -271,11 +314,20 @@ public class ServletContext {
         }
     }
 
-
+    /**
+     * 获取session
+     * @param JSESSIONID
+     * @return
+     */
     public HttpSession getSession(String JSESSIONID) {
         return sessions.get(JSESSIONID);
     }
 
+    /**
+     * 创建session
+     * @param response
+     * @return
+     */
     public HttpSession createSession(Response response) {
         HttpSession session = new HttpSession(UUIDUtil.uuid());
         sessions.put(session.getId(), session);
@@ -287,11 +339,19 @@ public class ServletContext {
         return session;
     }
 
+    /**
+     * 销毁session
+     * @param session
+     */
     public void invalidateSession(HttpSession session) {
         sessions.remove(session.getId());
         afterSessionDestroyed(session);
     }
 
+    /**
+     * 清除空闲的session
+     * 由于ConcurrentHashMap是线程安全的，所以remove不需要进行加锁
+     */
     public void cleanIdleSessions() {
         for (Iterator<Map.Entry<String, HttpSession>> it = sessions.entrySet().iterator(); it.hasNext(); ) {
             Map.Entry<String, HttpSession> entry = it.next();
@@ -302,7 +362,7 @@ public class ServletContext {
             }
         }
     }
-
+    
     private void afterSessionDestroyed(HttpSession session) {
         HttpSessionEvent httpSessionEvent = new HttpSessionEvent(session);
         for (HttpSessionListener listener : httpSessionListeners) {

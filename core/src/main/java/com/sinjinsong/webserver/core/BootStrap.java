@@ -10,7 +10,11 @@ import java.util.Scanner;
  * @date 2018/3/6
  */
 public class BootStrap {
-    
+
+    /**
+     * 服务器启动入口
+     * 用户程序与服务器的接口
+     */
     public static void run() {
         String port = PropertyUtil.getProperty("server.port");
         if(port == null) {

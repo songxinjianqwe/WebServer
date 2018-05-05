@@ -42,6 +42,11 @@ public class Request {
     private Cookie[] cookies;
     private HttpSession session;
 
+    /**
+     * 获取queryString或者body（表单格式）的键值类型的数据
+     * @param key
+     * @return
+     */
     public String getParameter(String key) {
         List<String> params = this.params.get(key);
         if(params == null) {
@@ -49,9 +54,11 @@ public class Request {
         }
         return params.get(0);
     }
+    
+    
     /**
+     * 解析HTTP请求
      * 读取请求体只能使用字节流，使用字符流读不到
-     *
      * @param data
      * @throws RequestParseException
      */
@@ -89,11 +96,11 @@ public class Request {
     public Object getAttribute(String key) {
         return attributes.get(key);
     }
-
+    
     public RequestDispatcher getRequestDispatcher(String url) {
         return new ApplicationRequestDispatcher(url);
     }
-
+    
     /**
      * 如果请求报文中携带JSESSIONID这个Cookie，那么取出对应的session
      * 否则创建一个Session，并在响应报文中添加一个响应头Set-Cookie: JSESSIONID=D5A5C79F3C8E8653BC8B4F0860BFDBCD
@@ -103,7 +110,8 @@ public class Request {
      * 即，如果在Cookie中读到的JSESSIONID，那么不会创建新的Session，也不会在响应头中加入Set-Cookie：“JSESSIONID=XXXXXXX”
      * 如果没有读到，那么会创建新的Session，并在响应头中加入Set-Cookie：“JSESSIONID=XXXXXXX”
      * 如果没有调用getSession，那么不会创建新的Session
-     *
+     * 
+     * @param createIfNotExists 如果为true，那么在不存在session时会创建一个新的session；否则会直接返回null
      * @return HttpSession
      */
     public HttpSession getSession(boolean createIfNotExists) {

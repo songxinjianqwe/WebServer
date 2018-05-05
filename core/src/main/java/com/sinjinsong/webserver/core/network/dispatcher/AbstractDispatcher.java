@@ -14,6 +14,8 @@ import java.util.concurrent.TimeUnit;
 /**
  * @author sinjinsong
  * @date 2018/5/4
+ * 
+ * 所有Dispatcher（请求分发器）的父类
  */
 public abstract class AbstractDispatcher {
     protected ResourceHandler resourceHandler;
@@ -35,11 +37,18 @@ public abstract class AbstractDispatcher {
         };
         this.pool = new ThreadPoolExecutor(100, 100, 1, TimeUnit.SECONDS, new ArrayBlockingQueue<>(200), threadFactory, new ThreadPoolExecutor.CallerRunsPolicy());
     }
-
+    
+    /**
+     * 关闭
+     */
     public void shutdown() {
         pool.shutdown();
         servletContext.destroy();
     }
-    
+
+    /**
+     * 分发请求
+     * @param socketWrapper
+     */
     public abstract void doDispatch(SocketWrapper socketWrapper);
 }

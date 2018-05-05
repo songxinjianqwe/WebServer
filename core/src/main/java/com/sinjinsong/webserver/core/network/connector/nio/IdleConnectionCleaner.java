@@ -16,11 +16,9 @@ import java.util.concurrent.TimeUnit;
 public class IdleConnectionCleaner implements Runnable {
     private ScheduledExecutorService executor;
     private List<NioPoller> nioPollers;
-    private int keepAliveTimeout;
 
-    public IdleConnectionCleaner(List<NioPoller> nioPollers, int keepAliveTimeout) {
+    public IdleConnectionCleaner(List<NioPoller> nioPollers) {
         this.nioPollers = nioPollers;
-        this.keepAliveTimeout = keepAliveTimeout;
     }
 
     public void start() {

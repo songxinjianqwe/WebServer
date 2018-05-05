@@ -7,10 +7,22 @@ import org.springframework.util.StringUtils;
  * @date 2018/5/4
  */
 public abstract class Endpoint {
+    /**
+     * 启动服务器
+     * @param port
+     */
     public abstract void start(int port);
 
+    /**
+     * 关闭服务器
+     */
     public abstract void close();
 
+    /**
+     * 根据传入的bio、nio、aio获取相应的Endpoint实例
+     * @param connector
+     * @return
+     */
     public static Endpoint getInstance(String connector) {
         StringBuilder sb = new StringBuilder();
         sb.append("com.sinjinsong.webserver.core.network.endpoint")

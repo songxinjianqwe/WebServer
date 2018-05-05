@@ -35,7 +35,10 @@ public class AioRequestHandler extends AbstractRequestHandler {
         super(socketWrapper, servletContext, exceptionHandler, resourceHandler,request,response);
         this.readHandler = readHandler;
     }
-    
+
+    /**
+     * 写回后重新调用readHandler，进行读取（猜测AIO也是保活的）
+     */
     @Override
     public void finishRequest() {
         isFinished = true;
