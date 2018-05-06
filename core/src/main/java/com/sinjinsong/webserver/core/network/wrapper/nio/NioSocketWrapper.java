@@ -36,10 +36,6 @@ public class NioSocketWrapper implements SocketWrapper {
         socketChannel.close();
     }
 
-    @Override
-    public boolean isClosed() {
-        return !socketChannel.isOpen()  || !socketChannel.isConnected();
-    }
 
 
     @Override

@@ -18,6 +18,7 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.util.List;
 
+
 /**
  * @author sinjinsong
  * @date 2018/5/4
@@ -91,7 +92,6 @@ public abstract class AbstractRequestHandler implements FilterChain, Runnable {
      * 调用servlet
      */
     private void service() {
-        log.info("socket isClosed: {}",this.socketWrapper.isClosed());
         try {
             //处理动态资源，交由某个Servlet执行
             //Servlet是单例多线程

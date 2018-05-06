@@ -30,10 +30,6 @@ public class AioSocketWrapper implements SocketWrapper {
         socketChannel.close();
     }
 
-    @Override
-    public boolean isClosed() {
-        return !socketChannel.isOpen();
-    }
 
     @Override
     public String toString() {

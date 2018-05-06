@@ -24,8 +24,4 @@ public class BioSocketWrapper implements SocketWrapper {
         socket.close();
     }
 
-    @Override
-    public boolean isClosed() {
-        return socket.isClosed();
-    }
 }
