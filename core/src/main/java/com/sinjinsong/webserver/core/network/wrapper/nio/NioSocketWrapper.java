@@ -16,10 +16,10 @@ import java.nio.channels.SocketChannel;
 @Slf4j
 @Data
 public class NioSocketWrapper implements SocketWrapper {
-    private NioEndpoint server;
-    private SocketChannel socketChannel;
-    private NioPoller nioPoller;
-    private boolean isNewSocket;
+    private final NioEndpoint server;
+    private final SocketChannel socketChannel;
+    private final NioPoller nioPoller;
+    private final boolean isNewSocket;
     private volatile long waitBegin;
     private volatile boolean isWorking;
     

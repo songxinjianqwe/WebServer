@@ -25,7 +25,7 @@ public class NioPoller implements Runnable {
     private Queue<PollerEvent> events;
     private String pollerName;
     private Map<SocketChannel, NioSocketWrapper> sockets;
-        
+    
     public NioPoller(NioEndpoint nioEndpoint, String pollerName) throws IOException {
         this.sockets = new ConcurrentHashMap<>();
         this.nioEndpoint = nioEndpoint;
@@ -33,7 +33,13 @@ public class NioPoller implements Runnable {
         this.events = new ConcurrentLinkedQueue<>();
         this.pollerName = pollerName;
     }
-    
+
+    /**
+     * 注册一个新的或旧的socket至Poller中
+     * 注意，只有在这里会初始化或重置waitBegin
+     * @param socketChannel
+     * @param isNewSocket
+     */
     public void register(SocketChannel socketChannel, boolean isNewSocket) {
         log.info("Acceptor将连接到的socket放入 {} 的Queue中", pollerName);
         NioSocketWrapper wrapper;
@@ -59,7 +65,7 @@ public class NioPoller implements Runnable {
         events.clear();
         selector.close();
     }
-
+    
     @Override
     public void run() {
         log.info("{} 开始监听", Thread.currentThread().getName());
@@ -117,7 +123,7 @@ public class NioPoller implements Runnable {
     public String getPollerName() {
         return pollerName;
     }
-
+    
     public void cleanTimeoutSockets() {
         for (Iterator<Map.Entry<SocketChannel, NioSocketWrapper>> it = sockets.entrySet().iterator(); it.hasNext(); ) {
             NioSocketWrapper wrapper = it.next().getValue();
@@ -143,7 +149,7 @@ public class NioPoller implements Runnable {
             }
         }
     }
-
+    
 
     @Data
     @AllArgsConstructor
@@ -156,7 +162,6 @@ public class NioPoller implements Runnable {
             try {
                 if (wrapper.getSocketChannel().isOpen()) {
                     wrapper.getSocketChannel().register(wrapper.getNioPoller().getSelector(), SelectionKey.OP_READ, wrapper);
-                    wrapper.setWaitBegin(System.currentTimeMillis());
                 } else {
                     log.error("socket已经被关闭，无法注册到Poller", wrapper.getSocketChannel());
                 }

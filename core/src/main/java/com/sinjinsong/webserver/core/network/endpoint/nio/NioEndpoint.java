@@ -35,7 +35,7 @@ public class NioEndpoint extends Endpoint {
     /**
      * 1min
      */
-    private int keepAliveTimeout = 60 * 1000 ;
+    private int keepAliveTimeout = 6 * 1000 ;
     /**
      * 针对keep-alive连接，如果长期没有数据交换则将其关闭
      */
@@ -73,7 +73,7 @@ public class NioEndpoint extends Endpoint {
         t.setDaemon(true);
         t.start();
     }
-
+    
     /**
      * 初始化IdleSocketCleaner
      */
@@ -81,7 +81,7 @@ public class NioEndpoint extends Endpoint {
         cleaner = new IdleConnectionCleaner(nioPollers);
         cleaner.start();
     }
-
+    
     //************************初始化结束***************************************************************
     @Override
     public void start(int port) {
@@ -98,7 +98,6 @@ public class NioEndpoint extends Endpoint {
             close();
         }
     }
-    
     
     @Override
     public void close() {
@@ -118,7 +117,7 @@ public class NioEndpoint extends Endpoint {
             e.printStackTrace();
         }
     }
-
+    
     /**
      * 调用dispatcher，处理这个读已就绪的客户端连接
      * @param socketWrapper
@@ -139,13 +138,13 @@ public class NioEndpoint extends Endpoint {
     public boolean isRunning() {
         return isRunning;
     }
-
+    
     /**
      * 以阻塞方式来接收一个客户端的链接
      * @return
      * @throws IOException
      */
-    public SocketChannel serverSocketAccept() throws IOException {
+    public SocketChannel accept() throws IOException {
         return server.accept();
     }
 
@@ -155,7 +154,7 @@ public class NioEndpoint extends Endpoint {
      * @param socket
      * @return
      */
-    public void setSocketOptions(SocketChannel socket) throws IOException {
+    public void registerToPoller(SocketChannel socket) throws IOException {
         server.configureBlocking(false);
         getPoller().register(socket, true);
         server.configureBlocking(true);

@@ -35,7 +35,7 @@ public class BioRequestHandler extends AbstractRequestHandler {
      * 写回后立即关闭socket
      */
     @Override
-    public void finishRequest() {
+    public void flushResponse() {
         isFinished = true;
         BioSocketWrapper bioSocketWrapper = (BioSocketWrapper) socketWrapper;
         byte[] bytes = response.getResponseBytes();

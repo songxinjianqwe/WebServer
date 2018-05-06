@@ -40,7 +40,7 @@ public class AioRequestHandler extends AbstractRequestHandler {
      * 写回后重新调用readHandler，进行读取（猜测AIO也是保活的）
      */
     @Override
-    public void finishRequest() {
+    public void flushResponse() {
         isFinished = true;
         ByteBuffer[] responseData = response.getResponseByteBuffer();
         AioSocketWrapper aioSocketWrapper = (AioSocketWrapper) socketWrapper;

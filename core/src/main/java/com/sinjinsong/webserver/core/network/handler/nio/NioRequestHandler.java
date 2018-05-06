@@ -35,7 +35,7 @@ public class NioRequestHandler extends AbstractRequestHandler {
      * 写入后会根据请求头Connection来判断是关闭连接还是重新将连接放回Poller，实现保活
      */
     @Override
-    public void finishRequest() {
+    public void flushResponse() {
         isFinished = true;
         NioSocketWrapper nioSocketWrapper = (NioSocketWrapper) socketWrapper;
         ByteBuffer[] responseData = response.getResponseByteBuffer();

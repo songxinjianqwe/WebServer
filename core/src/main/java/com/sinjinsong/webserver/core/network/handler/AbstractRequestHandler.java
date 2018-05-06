@@ -105,11 +105,14 @@ public abstract class AbstractRequestHandler implements FilterChain, Runnable {
             exceptionHandler.handle(new ServerErrorException(), response, socketWrapper);
         } finally {
             if (!isFinished) {
-                finishRequest();
+                flushResponse();
             }
         }
         log.info("请求处理完毕");
     }
-    
-    public abstract void finishRequest();
+
+    /**
+     * 响应数据写回到客户端
+     */
+    public abstract void flushResponse();
 }
